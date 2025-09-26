@@ -1,4 +1,4 @@
-import type { TenantData, Decision } from './screening';
+import type { TenantData, Decision, RiskBreakdown } from './screening';
 
 export interface AuditEntry {
   id: string;
@@ -6,6 +6,7 @@ export interface AuditEntry {
   input: TenantData;
   risk_score: number;
   decision: Decision;
+  breakdown: RiskBreakdown;
 }
 
 const MAX = 50;

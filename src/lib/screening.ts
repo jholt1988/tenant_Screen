@@ -7,9 +7,20 @@ export interface RentalHistory {
   late_payments: number; // number of late payments
 }
 
+export type CriminalSeverity = 'felony' | 'misdemeanor';
+export type CriminalCategory = 'violent' | 'property' | 'drug' | 'other';
+
+export interface CriminalRecord {
+  severity: CriminalSeverity;
+  category: CriminalCategory;
+  years_since: number;
+  description?: string | null;
+}
+
 export interface CriminalBackground {
   has_criminal_record: boolean;
   type_of_crime?: string | null;
+  records?: CriminalRecord[] | null;
 }
 
 export interface TenantData {
@@ -20,6 +31,23 @@ export interface TenantData {
   rental_history: RentalHistory;
   criminal_background: CriminalBackground;
   employment_status: EmploymentStatus;
+}
+
+export interface CriminalRecordEvaluation {
+  risk: number;
+  requiresIndividualReview: boolean;
+  consideredRecords: CriminalRecord[];
+  disregardedRecords: CriminalRecord[];
+  rationale: string[];
+}
+
+export interface RiskBreakdown {
+  affordability: AffordabilityEvaluation;
+  dtiHighApplied: boolean;
+  creditPoints: number;
+  rentalPoints: number;
+  criminal: CriminalRecordEvaluation;
+  employmentPoints: number;
 }
 
 export type AffordabilityTier = 'meets-rule' | 'partial-credit' | 'dti-exception' | 'fail';
@@ -96,9 +124,112 @@ export function evaluateRentalHistory(rental_history: RentalHistory, config?: Sc
   return risk_score;
 }
 
-export function evaluateCriminalRecord(criminal_background: CriminalBackground, config?: ScreeningConfig): number {
-  if (config) return criminal_background.has_criminal_record ? config.scoring.criminal.hasRecordPoints : 0;
-  return criminal_background.has_criminal_record ? 3 : 0;
+function normalizeRecords(input?: CriminalRecord[] | null): CriminalRecord[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((rec) => ({
+      severity: rec.severity,
+      category: rec.category ?? 'other',
+      years_since: rec.years_since,
+      description: rec.description ?? null,
+    }))
+    .filter(
+      (rec): rec is CriminalRecord =>
+        (rec.severity === 'felony' || rec.severity === 'misdemeanor') &&
+        (rec.category === 'violent' || rec.category === 'property' || rec.category === 'drug' || rec.category === 'other') &&
+        typeof rec.years_since === 'number' &&
+        Number.isFinite(rec.years_since) &&
+        rec.years_since >= 0,
+    );
+}
+
+export function evaluateCriminalRecord(
+  criminal_background: CriminalBackground,
+  config: ScreeningConfig = defaultScreeningConfig,
+): CriminalRecordEvaluation {
+  if (!criminal_background.has_criminal_record) {
+    return {
+      risk: config.scoring.criminal.cleanRecordPoints,
+      requiresIndividualReview: false,
+      consideredRecords: [],
+      disregardedRecords: [],
+      rationale: ['No criminal convictions reported.'],
+    };
+  }
+
+  const thresholds = config.thresholds.criminal;
+  const scoring = config.scoring.criminal;
+
+  const normalized = normalizeRecords(criminal_background.records);
+  const consideredRecords: CriminalRecord[] = [];
+  const disregardedRecords: CriminalRecord[] = [];
+  const rationale: string[] = [];
+  let risk = 0;
+  let requiresIndividualReview = false;
+
+  if (!normalized.length && criminal_background.type_of_crime) {
+    rationale.push(
+      'Criminal history indicated but offense details missing. Flagged for individualized review to gather additional context.',
+    );
+    return {
+      risk: scoring.staleRecordPoints,
+      requiresIndividualReview: true,
+      consideredRecords,
+      disregardedRecords,
+      rationale,
+    };
+  }
+
+  normalized.forEach((record) => {
+    const lookback =
+      record.severity === 'felony'
+        ? record.category === 'violent'
+          ? thresholds.violentFelonyLookbackYears
+          : thresholds.felonyLookbackYears
+        : thresholds.misdemeanorLookbackYears;
+
+    if (record.years_since <= lookback) {
+      consideredRecords.push(record);
+      requiresIndividualReview = true;
+      if (record.severity === 'felony') {
+        if (record.category === 'violent') {
+          risk += scoring.recentViolentFelonyPoints;
+          rationale.push(
+            `Violent felony (${record.description ?? record.category}) within ${lookback} year lookback requires individualized assessment.`,
+          );
+        } else {
+          risk += scoring.recentFelonyPoints;
+          rationale.push(
+            `Felony (${record.description ?? record.category}) within ${lookback} year lookback requires individualized assessment.`,
+          );
+        }
+      } else {
+        risk += scoring.recentMisdemeanorPoints;
+        rationale.push(
+          `Misdemeanor (${record.description ?? record.category}) within ${lookback} year lookback flagged for individualized assessment.`,
+        );
+      }
+    } else {
+      disregardedRecords.push(record);
+      risk += scoring.staleRecordPoints;
+      rationale.push(
+        `Record (${record.description ?? record.category}) older than lookback window excluded from adverse action but documented for context.`,
+      );
+    }
+  });
+
+  if (!consideredRecords.length && !disregardedRecords.length) {
+    rationale.push('Criminal history data provided could not be validated; defaulting to individualized review.');
+    return {
+      risk: scoring.staleRecordPoints,
+      requiresIndividualReview: true,
+      consideredRecords,
+      disregardedRecords,
+      rationale,
+    };
+  }
+
+  return { risk, requiresIndividualReview, consideredRecords, disregardedRecords, rationale };
 }
 
 export function evaluateEmploymentStatus(status: EmploymentStatus, config?: ScreeningConfig): number {
@@ -112,20 +243,41 @@ export function evaluateEmploymentStatus(status: EmploymentStatus, config?: Scre
   return 2; // High risk (unemployed)
 }
 
-export function calculateRiskScore(tenant: TenantData, config: ScreeningConfig = defaultScreeningConfig): number {
-  let risk_score = 0;
+export function calculateRiskScore(
+  tenant: TenantData,
+  config: ScreeningConfig = defaultScreeningConfig,
+): { total: number; breakdown: RiskBreakdown } {
+  let total = 0;
 
   const affordability = evaluateAffordability(tenant.income, tenant.debt, tenant.monthly_rent, config);
-  risk_score += affordability.risk;
+  total += affordability.risk;
 
-  if (affordability.dti > config.thresholds.dtiHigh) risk_score += config.scoring.dtiHigh;
+  const dtiHighApplied = affordability.dti > config.thresholds.dtiHigh;
+  if (dtiHighApplied) total += config.scoring.dtiHigh;
 
-  risk_score += evaluateCreditScore(tenant.credit_score, config);
-  risk_score += evaluateRentalHistory(tenant.rental_history, config);
-  risk_score += evaluateCriminalRecord(tenant.criminal_background, config);
-  risk_score += evaluateEmploymentStatus(tenant.employment_status, config);
+  const creditPoints = evaluateCreditScore(tenant.credit_score, config);
+  total += creditPoints;
 
-  return risk_score;
+  const rentalPoints = evaluateRentalHistory(tenant.rental_history, config);
+  total += rentalPoints;
+
+  const criminal = evaluateCriminalRecord(tenant.criminal_background, config);
+  total += criminal.risk;
+
+  const employmentPoints = evaluateEmploymentStatus(tenant.employment_status, config);
+  total += employmentPoints;
+
+  return {
+    total,
+    breakdown: {
+      affordability,
+      dtiHighApplied,
+      creditPoints,
+      rentalPoints,
+      criminal,
+      employmentPoints,
+    },
+  };
 }
 
 export type Decision = 'Approved' | 'Flagged for Review' | 'Denied';
@@ -139,8 +291,8 @@ export function makeDecision(risk_score: number, config: ScreeningConfig = defau
 export function tenantScreeningAlgorithm(
   tenant: TenantData,
   config: ScreeningConfig = defaultScreeningConfig,
-): { risk_score: number; decision: Decision } {
-  const risk_score = calculateRiskScore(tenant, config);
-  const decision = makeDecision(risk_score, config);
-  return { risk_score, decision };
+): { risk_score: number; decision: Decision; breakdown: RiskBreakdown } {
+  const { total, breakdown } = calculateRiskScore(tenant, config);
+  const decision = makeDecision(total, config);
+  return { risk_score: total, decision, breakdown };
 }
