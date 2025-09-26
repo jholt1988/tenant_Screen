@@ -4,8 +4,20 @@
     "income": 78000,
     "debt": 21000,
     "credit_score": 772,
-    "rental_history": { "evictions": 0, "late_payments": 1 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1,
+      "eviction_filings": [
+        {
+          "filed_at": "2019-11-30",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -17,8 +29,14 @@
     "income": 82000,
     "debt": 24000,
     "credit_score": 758,
-    "rental_history": { "evictions": 0, "late_payments": 0 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 0
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -30,8 +48,20 @@
     "income": 69000,
     "debt": 26000,
     "credit_score": 745,
-    "rental_history": { "evictions": 0, "late_payments": 2 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2,
+      "eviction_filings": [
+        {
+          "filed_at": "2020-07-10",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -43,8 +73,14 @@
     "income": 72000,
     "debt": 25000,
     "credit_score": 768,
-    "rental_history": { "evictions": 0, "late_payments": 1 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -56,8 +92,20 @@
     "income": 76000,
     "debt": 28000,
     "credit_score": 732,
-    "rental_history": { "evictions": 0, "late_payments": 0 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 0,
+      "eviction_filings": [
+        {
+          "filed_at": "2021-04-02",
+          "outcome": "settled"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -69,8 +117,14 @@
     "income": 81000,
     "debt": 22000,
     "credit_score": 755,
-    "rental_history": { "evictions": 0, "late_payments": 1 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -82,8 +136,24 @@
     "income": 70000,
     "debt": 30000,
     "credit_score": 738,
-    "rental_history": { "evictions": 0, "late_payments": 3 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3,
+      "eviction_filings": [
+        {
+          "filed_at": "2022-03-18",
+          "outcome": "settled"
+        },
+        {
+          "filed_at": "2019-02-11",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -95,8 +165,20 @@
     "income": 83000,
     "debt": 21000,
     "credit_score": 781,
-    "rental_history": { "evictions": 0, "late_payments": 1 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1,
+      "eviction_filings": [
+        {
+          "filed_at": "2023-01-18",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "HighOpportunityZip",
     "proxy_label": "Majority",
@@ -108,8 +190,20 @@
     "income": 61000,
     "debt": 27000,
     "credit_score": 642,
-    "rental_history": { "evictions": 0, "late_payments": 4 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 4,
+      "eviction_filings": [
+        {
+          "filed_at": "2021-01-09",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -121,8 +215,20 @@
     "income": 58000,
     "debt": 25000,
     "credit_score": 618,
-    "rental_history": { "evictions": 0, "late_payments": 5 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 5,
+      "eviction_filings": [
+        {
+          "filed_at": "2020-05-14",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -134,8 +240,20 @@
     "income": 54000,
     "debt": 26000,
     "credit_score": 605,
-    "rental_history": { "evictions": 1, "late_payments": 4 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 1,
+      "late_payments": 4,
+      "eviction_filings": [
+        {
+          "filed_at": "2022-02-20",
+          "outcome": "judgment"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -147,19 +265,22 @@
     "income": 59000,
     "debt": 30000,
     "credit_score": 612,
-    "rental_history": { "evictions": 0, "late_payments": 6 },
-    "criminal_background": {
-      "has_criminal_record": true,
-      "type_of_crime": "misdemeanor",
-      "records": [
+
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 6,
+      "eviction_filings": [
         {
-          "severity": "misdemeanor",
-          "category": "other",
-          "years_since": 1,
-          "description": "Noise violation"
+          "filed_at": "2019-11-01",
+          "outcome": "settled"
         }
       ]
     },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "misdemeanor"
+    },
+
     "employment_status": "part-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -171,8 +292,20 @@
     "income": 62000,
     "debt": 31000,
     "credit_score": 655,
-    "rental_history": { "evictions": 0, "late_payments": 3 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3,
+      "eviction_filings": [
+        {
+          "filed_at": "2021-08-27",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -184,8 +317,20 @@
     "income": 60000,
     "debt": 28000,
     "credit_score": 628,
-    "rental_history": { "evictions": 0, "late_payments": 5 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 5,
+      "eviction_filings": [
+        {
+          "filed_at": "2023-06-15",
+          "outcome": "filed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -197,19 +342,26 @@
     "income": 56000,
     "debt": 25000,
     "credit_score": 598,
-    "rental_history": { "evictions": 1, "late_payments": 7 },
-    "criminal_background": {
-      "has_criminal_record": true,
-      "type_of_crime": "non-violent",
-      "records": [
+
+    "rental_history": {
+      "evictions": 1,
+      "late_payments": 7,
+      "eviction_filings": [
         {
-          "severity": "felony",
-          "category": "property",
-          "years_since": 5,
-          "description": "Burglary conviction"
+          "filed_at": "2023-04-05",
+          "outcome": "judgment"
+        },
+        {
+          "filed_at": "2020-09-12",
+          "outcome": "settled"
         }
       ]
     },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "non-violent"
+    },
+
     "employment_status": "unemployed",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -221,8 +373,20 @@
     "income": 63000,
     "debt": 24000,
     "credit_score": 662,
-    "rental_history": { "evictions": 0, "late_payments": 2 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2,
+      "eviction_filings": [
+        {
+          "filed_at": "2021-03-21",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -234,8 +398,20 @@
     "income": 64000,
     "debt": 23000,
     "credit_score": 648,
-    "rental_history": { "evictions": 0, "late_payments": 2 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2,
+      "eviction_filings": [
+        {
+          "filed_at": "2022-08-10",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -247,8 +423,20 @@
     "income": 61000,
     "debt": 22000,
     "credit_score": 634,
-    "rental_history": { "evictions": 0, "late_payments": 3 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3,
+      "eviction_filings": [
+        {
+          "filed_at": "2021-12-18",
+          "outcome": "settled"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -260,8 +448,20 @@
     "income": 58000,
     "debt": 21000,
     "credit_score": 622,
-    "rental_history": { "evictions": 0, "late_payments": 2 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2,
+      "eviction_filings": [
+        {
+          "filed_at": "2020-01-06",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -273,8 +473,20 @@
     "income": 56000,
     "debt": 20000,
     "credit_score": 608,
-    "rental_history": { "evictions": 0, "late_payments": 3 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3,
+      "eviction_filings": [
+        {
+          "filed_at": "2023-05-22",
+          "outcome": "settled"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "part-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -286,8 +498,20 @@
     "income": 60000,
     "debt": 24000,
     "credit_score": 655,
-    "rental_history": { "evictions": 0, "late_payments": 2 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2,
+      "eviction_filings": [
+        {
+          "filed_at": "2022-06-12",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -299,8 +523,20 @@
     "income": 62000,
     "debt": 26000,
     "credit_score": 640,
-    "rental_history": { "evictions": 0, "late_payments": 4 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 4,
+      "eviction_filings": [
+        {
+          "filed_at": "2019-03-14",
+          "outcome": "filed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -312,8 +548,20 @@
     "income": 57000,
     "debt": 25000,
     "credit_score": 618,
-    "rental_history": { "evictions": 0, "late_payments": 3 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3,
+      "eviction_filings": [
+        {
+          "filed_at": "2019-09-30",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "unemployed",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",
@@ -325,8 +573,20 @@
     "income": 65000,
     "debt": 27000,
     "credit_score": 646,
-    "rental_history": { "evictions": 0, "late_payments": 1 },
-    "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1,
+      "eviction_filings": [
+        {
+          "filed_at": "2023-02-01",
+          "outcome": "dismissed"
+        }
+      ]
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
     "employment_status": "full-time",
     "proxy_group": "ImmigrantCommunity",
     "proxy_label": "ProtectedProxy",

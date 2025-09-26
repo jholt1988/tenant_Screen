@@ -11,10 +11,15 @@ export interface ScreeningConfig {
       excellentMin: number; // inclusive
       goodMin: number; // inclusive
     };
+
+    rental?: {
+      evictionLookbackYears: number; // horizon for applying time decay to filings
+
     criminal: {
       violentFelonyLookbackYears: number;
       felonyLookbackYears: number;
       misdemeanorLookbackYears: number;
+
     };
   };
   scoring: {
@@ -27,7 +32,14 @@ export interface ScreeningConfig {
     };
     credit: { excellent: number; good: number; poor: number };
     rental: {
-      evictionPoints: number;
+      evictionPoints: number; // fallback penalty per eviction when detailed filings absent
+      evictionOutcomePoints?: {
+        filing: number; // base penalty when only a filing is known
+        dismissed: number; // penalty when the case was dismissed
+        settled: number; // penalty when settled without judgment
+        judgment: number; // penalty when eviction judgment granted
+      };
+      evictionTimeDecayFloor?: number; // minimum multiplier applied after time decay
       latePaymentsThreshold: number;
       latePaymentsPoints: number;
     };
@@ -56,24 +68,37 @@ export const defaultScreeningConfig: ScreeningConfig = {
       dtiException: 0.3,
     },
     credit: { excellentMin: 750, goodMin: 650 },
+
+    rental: {
+      evictionLookbackYears: 5,
+
     criminal: {
       violentFelonyLookbackYears: 10,
       felonyLookbackYears: 7,
       misdemeanorLookbackYears: 3,
+
     },
   },
   scoring: {
     dtiHigh: 2,
     affordability: { meetsRule: 0, partialCredit: 1, dtiException: 2, fail: 4 },
     credit: { excellent: 0, good: 1, poor: 2 },
-    rental: { evictionPoints: 3, latePaymentsThreshold: 3, latePaymentsPoints: 2 },
-    criminal: {
-      cleanRecordPoints: 0,
-      staleRecordPoints: 1,
-      recentMisdemeanorPoints: 2,
-      recentFelonyPoints: 3,
-      recentViolentFelonyPoints: 4,
+c
+    rental: {
+      evictionPoints: 3,
+      evictionOutcomePoints: {
+        filing: 1,
+        dismissed: 0.5,
+        settled: 2,
+        judgment: 3.5,
+      },
+      evictionTimeDecayFloor: 0.25,
+      latePaymentsThreshold: 3,
+      latePaymentsPoints: 2,
     },
+    criminal: { hasRecordPoints: 3 },
+
+
     employment: { fullTime: 0, partTime: 1, unemployed: 2 },
   },
   decision: {

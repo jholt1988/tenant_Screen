@@ -151,10 +151,19 @@ export default function ScreeningCalculatorPage() {
           excellentMin: String(cfg.thresholds.credit.excellentMin),
           goodMin: String(cfg.thresholds.credit.goodMin),
         },
+
+        rental: {
+          evictionLookbackYears: String(
+            cfg.thresholds.rental?.evictionLookbackYears ??
+              defaultScreeningConfig.thresholds.rental?.evictionLookbackYears ??
+              5,
+          ),
+
         criminal: {
           violentFelonyLookbackYears: String(cfg.thresholds.criminal.violentFelonyLookbackYears),
           felonyLookbackYears: String(cfg.thresholds.criminal.felonyLookbackYears),
           misdemeanorLookbackYears: String(cfg.thresholds.criminal.misdemeanorLookbackYears),
+
         },
       },
       scoring: {
@@ -174,6 +183,33 @@ export default function ScreeningCalculatorPage() {
           evictionPoints: String(cfg.scoring.rental.evictionPoints),
           latePaymentsThreshold: String(cfg.scoring.rental.latePaymentsThreshold),
           latePaymentsPoints: String(cfg.scoring.rental.latePaymentsPoints),
+          evictionOutcomePoints: {
+            filing: String(
+              cfg.scoring.rental.evictionOutcomePoints?.filing ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.filing ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            dismissed: String(
+              cfg.scoring.rental.evictionOutcomePoints?.dismissed ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.dismissed ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            settled: String(
+              cfg.scoring.rental.evictionOutcomePoints?.settled ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.settled ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            judgment: String(
+              cfg.scoring.rental.evictionOutcomePoints?.judgment ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.judgment ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+          },
+          evictionTimeDecayFloor: String(
+            cfg.scoring.rental.evictionTimeDecayFloor ??
+              defaultScreeningConfig.scoring.rental.evictionTimeDecayFloor ??
+              0,
+          ),
         },
         criminal: {
           cleanRecordPoints: String(cfg.scoring.criminal.cleanRecordPoints),
@@ -209,6 +245,10 @@ export default function ScreeningCalculatorPage() {
           excellentMin: Number(cf.thresholds.credit.excellentMin),
           goodMin: Number(cf.thresholds.credit.goodMin),
         },
+
+        rental: {
+          evictionLookbackYears: Number(cf.thresholds.rental.evictionLookbackYears),
+
         criminal: {
           violentFelonyLookbackYears: Number(cf.thresholds.criminal.violentFelonyLookbackYears),
           felonyLookbackYears: Number(cf.thresholds.criminal.felonyLookbackYears),
@@ -232,6 +272,13 @@ export default function ScreeningCalculatorPage() {
           evictionPoints: Number(cf.scoring.rental.evictionPoints),
           latePaymentsThreshold: Number(cf.scoring.rental.latePaymentsThreshold),
           latePaymentsPoints: Number(cf.scoring.rental.latePaymentsPoints),
+          evictionOutcomePoints: {
+            filing: Number(cf.scoring.rental.evictionOutcomePoints.filing),
+            dismissed: Number(cf.scoring.rental.evictionOutcomePoints.dismissed),
+            settled: Number(cf.scoring.rental.evictionOutcomePoints.settled),
+            judgment: Number(cf.scoring.rental.evictionOutcomePoints.judgment),
+          },
+          evictionTimeDecayFloor: Number(cf.scoring.rental.evictionTimeDecayFloor),
         },
         criminal: {
           cleanRecordPoints: Number(cf.scoring.criminal.cleanRecordPoints),
@@ -350,12 +397,18 @@ export default function ScreeningCalculatorPage() {
         if (isNum(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin;
         if (isNum(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin;
       }
+
+      if (override.thresholds.rental) {
+        const r = override.thresholds.rental;
+        if (isNum(r.evictionLookbackYears)) out.thresholds.rental.evictionLookbackYears = r.evictionLookbackYears;
+
       if (override.thresholds.criminal) {
         const cr = override.thresholds.criminal;
         if (isNum(cr.violentFelonyLookbackYears))
           out.thresholds.criminal.violentFelonyLookbackYears = cr.violentFelonyLookbackYears;
         if (isNum(cr.felonyLookbackYears)) out.thresholds.criminal.felonyLookbackYears = cr.felonyLookbackYears;
         if (isNum(cr.misdemeanorLookbackYears)) out.thresholds.criminal.misdemeanorLookbackYears = cr.misdemeanorLookbackYears;
+
       }
     }
     if (override.scoring) {
@@ -378,6 +431,18 @@ export default function ScreeningCalculatorPage() {
         if (isNum(r.evictionPoints)) out.scoring.rental.evictionPoints = r.evictionPoints;
         if (isNum(r.latePaymentsThreshold)) out.scoring.rental.latePaymentsThreshold = r.latePaymentsThreshold;
         if (isNum(r.latePaymentsPoints)) out.scoring.rental.latePaymentsPoints = r.latePaymentsPoints;
+        if (r.evictionOutcomePoints) {
+          const eo = out.scoring.rental.evictionOutcomePoints ?? {
+            ...defaultScreeningConfig.scoring.rental.evictionOutcomePoints,
+          };
+          const overridePoints = r.evictionOutcomePoints;
+          if (isNum(overridePoints.filing)) eo.filing = overridePoints.filing;
+          if (isNum(overridePoints.dismissed)) eo.dismissed = overridePoints.dismissed;
+          if (isNum(overridePoints.settled)) eo.settled = overridePoints.settled;
+          if (isNum(overridePoints.judgment)) eo.judgment = overridePoints.judgment;
+          out.scoring.rental.evictionOutcomePoints = eo;
+        }
+        if (isNum(r.evictionTimeDecayFloor)) out.scoring.rental.evictionTimeDecayFloor = r.evictionTimeDecayFloor;
       }
       if (override.scoring.criminal) {
         const cr = override.scoring.criminal;
@@ -786,6 +851,11 @@ export default function ScreeningCalculatorPage() {
                       <NumberField label="Credit Excellent Min" value={configForm.thresholds.credit.excellentMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, excellentMin: v}}})} />
                       <NumberField label="Credit Good Min" value={configForm.thresholds.credit.goodMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, goodMin: v}}})} />
                       <NumberField
+
+                        label="Eviction Lookback Years"
+                        value={configForm.thresholds.rental.evictionLookbackYears}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, rental: { evictionLookbackYears: v }}})}
+
                         label="Violent Felony Lookback (yrs)"
                         value={configForm.thresholds.criminal.violentFelonyLookbackYears}
                         onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, violentFelonyLookbackYears: v}}})}
@@ -799,6 +869,7 @@ export default function ScreeningCalculatorPage() {
                         label="Misdemeanor Lookback (yrs)"
                         value={configForm.thresholds.criminal.misdemeanorLookbackYears}
                         onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, misdemeanorLookbackYears: v}}})}
+
                       />
                     </div>
                   </section>
@@ -830,6 +901,31 @@ export default function ScreeningCalculatorPage() {
                       <NumberField label="Credit Good Points" value={configForm.scoring.credit.good} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, good: v}}})} />
                       <NumberField label="Credit Poor Points" value={configForm.scoring.credit.poor} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, poor: v}}})} />
                       <NumberField label="Eviction Points" value={configForm.scoring.rental.evictionPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionPoints: v}}})} />
+                      <NumberField
+                        label="Eviction Filing Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.filing}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, filing: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Dismissed Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.dismissed}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, dismissed: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Settled Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.settled}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, settled: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Judgment Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.judgment}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, judgment: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Time Decay Floor"
+                        value={configForm.scoring.rental.evictionTimeDecayFloor}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionTimeDecayFloor: v}}})}
+                      />
                       <NumberField label="Late Pmts Threshold" value={configForm.scoring.rental.latePaymentsThreshold} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, latePaymentsThreshold: v}}})} />
                       <NumberField label="Late Pmts Points" value={configForm.scoring.rental.latePaymentsPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, latePaymentsPoints: v}}})} />
                       <NumberField label="Clean Record Points" value={configForm.scoring.criminal.cleanRecordPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, cleanRecordPoints: v}}})} />
