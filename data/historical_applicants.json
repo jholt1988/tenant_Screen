@@ -148,7 +148,18 @@
     "debt": 30000,
     "credit_score": 612,
     "rental_history": { "evictions": 0, "late_payments": 6 },
-    "criminal_background": { "has_criminal_record": true, "type_of_crime": "misdemeanor" },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "misdemeanor",
+      "records": [
+        {
+          "severity": "misdemeanor",
+          "category": "other",
+          "years_since": 1,
+          "description": "Noise violation"
+        }
+      ]
+    },
     "employment_status": "part-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -187,7 +198,18 @@
     "debt": 25000,
     "credit_score": 598,
     "rental_history": { "evictions": 1, "late_payments": 7 },
-    "criminal_background": { "has_criminal_record": true, "type_of_crime": "non-violent" },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "non-violent",
+      "records": [
+        {
+          "severity": "felony",
+          "category": "property",
+          "years_since": 5,
+          "description": "Burglary conviction"
+        }
+      ]
+    },
     "employment_status": "unemployed",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
