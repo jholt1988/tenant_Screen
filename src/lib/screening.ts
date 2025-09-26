@@ -2,6 +2,8 @@ export type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 import type { ScreeningConfig } from './screeningConfig';
 import { defaultScreeningConfig } from './screeningConfig';
 
+export type RentalReference = 'excellent' | 'satisfactory' | 'concern';
+
 export interface RentalHistory {
   evictions: number; // number of evictions
   late_payments: number; // number of late payments
@@ -20,6 +22,8 @@ export interface TenantData {
   rental_history: RentalHistory;
   criminal_background: CriminalBackground;
   employment_status: EmploymentStatus;
+  rental_reference?: RentalReference;
+  utility_payment_score?: number; // alternative data derived from utility payment history (0-1)
 }
 
 export type AffordabilityTier = 'meets-rule' | 'partial-credit' | 'dti-exception' | 'fail';
@@ -81,19 +85,51 @@ export function evaluateCreditScore(credit_score: number, config?: ScreeningConf
   return 2; // High risk
 }
 
-export function evaluateRentalHistory(rental_history: RentalHistory, config?: ScreeningConfig): number {
+export function evaluateRentalHistory(
+  rental_history: RentalHistory,
+  config?: ScreeningConfig,
+  rental_reference?: RentalReference,
+): number {
   let risk_score = 0;
   if (config) {
     if (rental_history.evictions > 0) risk_score += config.scoring.rental.evictionPoints;
     if (rental_history.late_payments > config.scoring.rental.latePaymentsThreshold) {
       risk_score += config.scoring.rental.latePaymentsPoints;
     }
+    if (rental_reference) {
+      if (rental_reference === 'excellent') {
+        risk_score += config.scoring.rental.excellentReferenceOffset;
+      } else if (rental_reference === 'satisfactory') {
+        risk_score += config.scoring.rental.satisfactoryReferenceOffset;
+      } else if (rental_reference === 'concern') {
+        risk_score += config.scoring.rental.concernReferencePoints;
+      }
+    }
     return risk_score;
   }
   // default behavior
   if (rental_history.evictions > 0) risk_score += 3; // Red flag
   if (rental_history.late_payments > 3) risk_score += 2; // Instability
+  if (rental_reference) {
+    if (rental_reference === 'excellent') risk_score -= 1;
+    else if (rental_reference === 'concern') risk_score += 2;
+  }
   return risk_score;
+}
+
+export function evaluateAlternativeData(tenant: TenantData, config: ScreeningConfig): number {
+  const thresholds = config.thresholds.alternativeData;
+  const scoring = config.scoring.alternativeData;
+  if (!thresholds || !scoring) return 0;
+
+  const utilityScore = tenant.utility_payment_score;
+  if (utilityScore == null) return 0;
+
+  const { strong, moderate, weak } = thresholds.utility;
+  if (utilityScore >= strong) return scoring.utilityStrongOffset;
+  if (utilityScore >= moderate) return scoring.utilityModerateOffset;
+  if (utilityScore <= weak) return scoring.utilityWeakPoints;
+  return 0;
 }
 
 export function evaluateCriminalRecord(criminal_background: CriminalBackground, config?: ScreeningConfig): number {
@@ -121,9 +157,10 @@ export function calculateRiskScore(tenant: TenantData, config: ScreeningConfig =
   if (affordability.dti > config.thresholds.dtiHigh) risk_score += config.scoring.dtiHigh;
 
   risk_score += evaluateCreditScore(tenant.credit_score, config);
-  risk_score += evaluateRentalHistory(tenant.rental_history, config);
+  risk_score += evaluateRentalHistory(tenant.rental_history, config, tenant.rental_reference);
   risk_score += evaluateCriminalRecord(tenant.criminal_background, config);
   risk_score += evaluateEmploymentStatus(tenant.employment_status, config);
+  risk_score += evaluateAlternativeData(tenant, config);
 
   return risk_score;
 }

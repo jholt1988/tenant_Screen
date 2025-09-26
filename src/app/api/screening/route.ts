@@ -107,6 +107,9 @@ type PartialConfig = Partial<{
       dtiException: number;
     }>;
     credit: Partial<{ excellentMin: number; goodMin: number }>;
+    alternativeData: Partial<{
+      utility: Partial<{ strong: number; moderate: number; weak: number }>;
+    }>;
   }>;
   scoring: Partial<{
     dtiHigh: number;
@@ -117,9 +120,21 @@ type PartialConfig = Partial<{
       fail: number;
     }>;
     credit: Partial<{ excellent: number; good: number; poor: number }>;
-    rental: Partial<{ evictionPoints: number; latePaymentsThreshold: number; latePaymentsPoints: number }>;
+    rental: Partial<{
+      evictionPoints: number;
+      latePaymentsThreshold: number;
+      latePaymentsPoints: number;
+      excellentReferenceOffset: number;
+      satisfactoryReferenceOffset: number;
+      concernReferencePoints: number;
+    }>;
     criminal: Partial<{ hasRecordPoints: number }>;
     employment: Partial<{ fullTime: number; partTime: number; unemployed: number }>;
+    alternativeData: Partial<{
+      utilityStrongOffset: number;
+      utilityModerateOffset: number;
+      utilityWeakPoints: number;
+    }>;
   }>;
   decision: Partial<{ approvedMax: number; flaggedMax: number }>;
 }>;
@@ -148,6 +163,17 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin!;
       if (isFiniteNumber(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin!;
     }
+    if (cfg.thresholds.alternativeData && cfg.thresholds.alternativeData.utility) {
+      if (!out.thresholds.alternativeData) {
+        out.thresholds.alternativeData = JSON.parse(
+          JSON.stringify(defaultScreeningConfig.thresholds.alternativeData ?? { utility: { strong: 0.9, moderate: 0.8, weak: 0.65 } }),
+        );
+      }
+      const u = cfg.thresholds.alternativeData.utility;
+      if (isFiniteNumber(u.strong)) out.thresholds.alternativeData.utility.strong = u.strong!;
+      if (isFiniteNumber(u.moderate)) out.thresholds.alternativeData.utility.moderate = u.moderate!;
+      if (isFiniteNumber(u.weak)) out.thresholds.alternativeData.utility.weak = u.weak!;
+    }
   }
 
   // scoring
@@ -171,6 +197,15 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(r.evictionPoints)) out.scoring.rental.evictionPoints = r.evictionPoints!;
       if (isFiniteNumber(r.latePaymentsThreshold)) out.scoring.rental.latePaymentsThreshold = r.latePaymentsThreshold!;
       if (isFiniteNumber(r.latePaymentsPoints)) out.scoring.rental.latePaymentsPoints = r.latePaymentsPoints!;
+      if (isFiniteNumber(r.excellentReferenceOffset)) {
+        out.scoring.rental.excellentReferenceOffset = r.excellentReferenceOffset!;
+      }
+      if (isFiniteNumber(r.satisfactoryReferenceOffset)) {
+        out.scoring.rental.satisfactoryReferenceOffset = r.satisfactoryReferenceOffset!;
+      }
+      if (isFiniteNumber(r.concernReferencePoints)) {
+        out.scoring.rental.concernReferencePoints = r.concernReferencePoints!;
+      }
     }
     if (cfg.scoring.criminal) {
       const cr = cfg.scoring.criminal;
@@ -181,6 +216,23 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(e.fullTime)) out.scoring.employment.fullTime = e.fullTime!;
       if (isFiniteNumber(e.partTime)) out.scoring.employment.partTime = e.partTime!;
       if (isFiniteNumber(e.unemployed)) out.scoring.employment.unemployed = e.unemployed!;
+    }
+    if (cfg.scoring.alternativeData) {
+      if (!out.scoring.alternativeData) {
+        out.scoring.alternativeData = JSON.parse(
+          JSON.stringify(
+            defaultScreeningConfig.scoring.alternativeData ?? {
+              utilityStrongOffset: 0,
+              utilityModerateOffset: 0,
+              utilityWeakPoints: 0,
+            },
+          ),
+        );
+      }
+      const alt = cfg.scoring.alternativeData;
+      if (isFiniteNumber(alt.utilityStrongOffset)) out.scoring.alternativeData.utilityStrongOffset = alt.utilityStrongOffset!;
+      if (isFiniteNumber(alt.utilityModerateOffset)) out.scoring.alternativeData.utilityModerateOffset = alt.utilityModerateOffset!;
+      if (isFiniteNumber(alt.utilityWeakPoints)) out.scoring.alternativeData.utilityWeakPoints = alt.utilityWeakPoints!;
     }
   }
 
