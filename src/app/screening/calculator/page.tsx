@@ -23,6 +23,7 @@ type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 
 interface FormState {
   income: string;
+  monthly_rent: string;
   debt: string;
   credit_score: string;
   rental_history: { evictions: string; late_payments: string };
@@ -33,6 +34,7 @@ interface FormState {
 export default function ScreeningCalculatorPage() {
   const [form, setForm] = useState<FormState>({
     income: '50000',
+    monthly_rent: '1600',
     debt: '15000',
     credit_score: '720',
     rental_history: { evictions: '0', late_payments: '2' },
@@ -58,6 +60,7 @@ export default function ScreeningCalculatorPage() {
 
     const payload: any = {
       income: Number(form.income),
+      monthly_rent: Number(form.monthly_rent),
       debt: Number(form.debt),
       credit_score: Number(form.credit_score),
       rental_history: {
@@ -116,6 +119,12 @@ export default function ScreeningCalculatorPage() {
     return {
       thresholds: {
         dtiHigh: String(cfg.thresholds.dtiHigh),
+        affordability: {
+          rentRule: String(cfg.thresholds.affordability.rentRule),
+          partialCreditRatio: String(cfg.thresholds.affordability.partialCreditRatio),
+          dtiMitigation: String(cfg.thresholds.affordability.dtiMitigation),
+          dtiException: String(cfg.thresholds.affordability.dtiException),
+        },
         credit: {
           excellentMin: String(cfg.thresholds.credit.excellentMin),
           goodMin: String(cfg.thresholds.credit.goodMin),
@@ -123,6 +132,12 @@ export default function ScreeningCalculatorPage() {
       },
       scoring: {
         dtiHigh: String(cfg.scoring.dtiHigh),
+        affordability: {
+          meetsRule: String(cfg.scoring.affordability.meetsRule),
+          partialCredit: String(cfg.scoring.affordability.partialCredit),
+          dtiException: String(cfg.scoring.affordability.dtiException),
+          fail: String(cfg.scoring.affordability.fail),
+        },
         credit: {
           excellent: String(cfg.scoring.credit.excellent),
           good: String(cfg.scoring.credit.good),
@@ -151,6 +166,12 @@ export default function ScreeningCalculatorPage() {
     return {
       thresholds: {
         dtiHigh: Number(cf.thresholds.dtiHigh),
+        affordability: {
+          rentRule: Number(cf.thresholds.affordability.rentRule),
+          partialCreditRatio: Number(cf.thresholds.affordability.partialCreditRatio),
+          dtiMitigation: Number(cf.thresholds.affordability.dtiMitigation),
+          dtiException: Number(cf.thresholds.affordability.dtiException),
+        },
         credit: {
           excellentMin: Number(cf.thresholds.credit.excellentMin),
           goodMin: Number(cf.thresholds.credit.goodMin),
@@ -158,6 +179,12 @@ export default function ScreeningCalculatorPage() {
       },
       scoring: {
         dtiHigh: Number(cf.scoring.dtiHigh),
+        affordability: {
+          meetsRule: Number(cf.scoring.affordability.meetsRule),
+          partialCredit: Number(cf.scoring.affordability.partialCredit),
+          dtiException: Number(cf.scoring.affordability.dtiException),
+          fail: Number(cf.scoring.affordability.fail),
+        },
         credit: {
           excellent: Number(cf.scoring.credit.excellent),
           good: Number(cf.scoring.credit.good),
@@ -185,11 +212,12 @@ export default function ScreeningCalculatorPage() {
   function exportCsv() {
     if (!audits || audits.length === 0) return;
     const headers = [
-      'timestamp','income','debt','credit_score','evictions','late_payments','has_criminal_record','type_of_crime','employment_status','risk_score','decision'
+      'timestamp','income','monthly_rent','debt','credit_score','evictions','late_payments','has_criminal_record','type_of_crime','employment_status','risk_score','decision'
     ];
     const rows = audits.map((a) => [
       a.timestamp,
       a.input.income,
+      a.input.monthly_rent,
       a.input.debt,
       a.input.credit_score,
       a.input.rental_history?.evictions ?? '',
@@ -246,6 +274,13 @@ export default function ScreeningCalculatorPage() {
 
     if (override.thresholds) {
       if (isNum(override.thresholds.dtiHigh)) out.thresholds.dtiHigh = override.thresholds.dtiHigh;
+      if (override.thresholds.affordability) {
+        const a = override.thresholds.affordability;
+        if (isNum(a.rentRule)) out.thresholds.affordability.rentRule = a.rentRule;
+        if (isNum(a.partialCreditRatio)) out.thresholds.affordability.partialCreditRatio = a.partialCreditRatio;
+        if (isNum(a.dtiMitigation)) out.thresholds.affordability.dtiMitigation = a.dtiMitigation;
+        if (isNum(a.dtiException)) out.thresholds.affordability.dtiException = a.dtiException;
+      }
       if (override.thresholds.credit) {
         const c = override.thresholds.credit;
         if (isNum(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin;
@@ -254,6 +289,13 @@ export default function ScreeningCalculatorPage() {
     }
     if (override.scoring) {
       if (isNum(override.scoring.dtiHigh)) out.scoring.dtiHigh = override.scoring.dtiHigh;
+      if (override.scoring.affordability) {
+        const a = override.scoring.affordability;
+        if (isNum(a.meetsRule)) out.scoring.affordability.meetsRule = a.meetsRule;
+        if (isNum(a.partialCredit)) out.scoring.affordability.partialCredit = a.partialCredit;
+        if (isNum(a.dtiException)) out.scoring.affordability.dtiException = a.dtiException;
+        if (isNum(a.fail)) out.scoring.affordability.fail = a.fail;
+      }
       if (override.scoring.credit) {
         const c = override.scoring.credit;
         if (isNum(c.excellent)) out.scoring.credit.excellent = c.excellent;
@@ -312,7 +354,7 @@ export default function ScreeningCalculatorPage() {
         <form onSubmit={onSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
           <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Financial Information</h2>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Annual Income ($)</label>
                 <input
@@ -320,6 +362,17 @@ export default function ScreeningCalculatorPage() {
                   min={0}
                   value={form.income}
                   onChange={(e) => setForm({ ...form, income: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Rent ($)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.monthly_rent}
+                  onChange={(e) => setForm({ ...form, monthly_rent: e.target.value })}
                   className="w-full border rounded px-3 py-2"
                   required
                 />
@@ -441,6 +494,7 @@ export default function ScreeningCalculatorPage() {
               onClick={() => {
                 setForm({
                   income: '50000',
+                  monthly_rent: '1600',
                   debt: '15000',
                   credit_score: '720',
                   rental_history: { evictions: '0', late_payments: '2' },
@@ -482,6 +536,26 @@ export default function ScreeningCalculatorPage() {
                     <h3 className="font-medium text-gray-800 mb-2">Thresholds</h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       <NumberField label="DTI High" value={configForm.thresholds.dtiHigh} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, dtiHigh: v}})} />
+                      <NumberField
+                        label="Income-to-Rent Full Credit"
+                        value={configForm.thresholds.affordability.rentRule}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, affordability: {...configForm.thresholds.affordability, rentRule: v}}})}
+                      />
+                      <NumberField
+                        label="Income-to-Rent Partial Credit"
+                        value={configForm.thresholds.affordability.partialCreditRatio}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, affordability: {...configForm.thresholds.affordability, partialCreditRatio: v}}})}
+                      />
+                      <NumberField
+                        label="Partial Credit Max DTI"
+                        value={configForm.thresholds.affordability.dtiMitigation}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, affordability: {...configForm.thresholds.affordability, dtiMitigation: v}}})}
+                      />
+                      <NumberField
+                        label="Alt Affordability Max DTI"
+                        value={configForm.thresholds.affordability.dtiException}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, affordability: {...configForm.thresholds.affordability, dtiException: v}}})}
+                      />
                       <NumberField label="Credit Excellent Min" value={configForm.thresholds.credit.excellentMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, excellentMin: v}}})} />
                       <NumberField label="Credit Good Min" value={configForm.thresholds.credit.goodMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, goodMin: v}}})} />
                     </div>
@@ -490,6 +564,26 @@ export default function ScreeningCalculatorPage() {
                     <h3 className="font-medium text-gray-800 mb-2">Scoring</h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       <NumberField label="DTI High Points" value={configForm.scoring.dtiHigh} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, dtiHigh: v}})} />
+                      <NumberField
+                        label="Affordability Meets Rule"
+                        value={configForm.scoring.affordability.meetsRule}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, affordability: {...configForm.scoring.affordability, meetsRule: v}}})}
+                      />
+                      <NumberField
+                        label="Affordability Partial Credit"
+                        value={configForm.scoring.affordability.partialCredit}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, affordability: {...configForm.scoring.affordability, partialCredit: v}}})}
+                      />
+                      <NumberField
+                        label="Affordability DTI Exception"
+                        value={configForm.scoring.affordability.dtiException}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, affordability: {...configForm.scoring.affordability, dtiException: v}}})}
+                      />
+                      <NumberField
+                        label="Affordability Fail"
+                        value={configForm.scoring.affordability.fail}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, affordability: {...configForm.scoring.affordability, fail: v}}})}
+                      />
                       <NumberField label="Credit Excellent Points" value={configForm.scoring.credit.excellent} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, excellent: v}}})} />
                       <NumberField label="Credit Good Points" value={configForm.scoring.credit.good} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, good: v}}})} />
                       <NumberField label="Credit Poor Points" value={configForm.scoring.credit.poor} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, poor: v}}})} />
@@ -544,6 +638,7 @@ export default function ScreeningCalculatorPage() {
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rent</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debt</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
@@ -557,6 +652,7 @@ export default function ScreeningCalculatorPage() {
                         {new Date(a.timestamp).toLocaleString()}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.income{'}'}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.monthly_rent{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.debt{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.credit_score{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{a.risk_score}</td>

@@ -17,10 +17,12 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
   const errors: string[] = [];
 
   const income = toNumber(payload?.income);
+  const monthly_rent = toNumber(payload?.monthly_rent);
   const debt = toNumber(payload?.debt);
   const credit_score = toNumber(payload?.credit_score);
 
   if (income === undefined || income < 0) errors.push('income must be a non-negative number');
+  if (monthly_rent === undefined || monthly_rent < 0) errors.push('monthly_rent must be a non-negative number');
   if (debt === undefined || debt < 0) errors.push('debt must be a non-negative number');
   if (credit_score === undefined || credit_score < 300 || credit_score > 850) errors.push('credit_score must be a number between 300 and 850');
 
@@ -47,6 +49,7 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
     ok: true,
     data: {
       income: income!,
+      monthly_rent: monthly_rent!,
       debt: debt!,
       credit_score: credit_score!,
       rental_history: { evictions: evictions!, late_payments: late_payments! },
@@ -97,10 +100,22 @@ function isFiniteNumber(n: any): n is number {
 type PartialConfig = Partial<{
   thresholds: Partial<{
     dtiHigh: number;
+    affordability: Partial<{
+      rentRule: number;
+      partialCreditRatio: number;
+      dtiMitigation: number;
+      dtiException: number;
+    }>;
     credit: Partial<{ excellentMin: number; goodMin: number }>;
   }>;
   scoring: Partial<{
     dtiHigh: number;
+    affordability: Partial<{
+      meetsRule: number;
+      partialCredit: number;
+      dtiException: number;
+      fail: number;
+    }>;
     credit: Partial<{ excellent: number; good: number; poor: number }>;
     rental: Partial<{ evictionPoints: number; latePaymentsThreshold: number; latePaymentsPoints: number }>;
     criminal: Partial<{ hasRecordPoints: number }>;
@@ -121,6 +136,13 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
   // thresholds
   if (cfg.thresholds) {
     if (isFiniteNumber(cfg.thresholds.dtiHigh)) out.thresholds.dtiHigh = cfg.thresholds.dtiHigh!;
+    if (cfg.thresholds.affordability) {
+      const a = cfg.thresholds.affordability;
+      if (isFiniteNumber(a.rentRule)) out.thresholds.affordability.rentRule = a.rentRule!;
+      if (isFiniteNumber(a.partialCreditRatio)) out.thresholds.affordability.partialCreditRatio = a.partialCreditRatio!;
+      if (isFiniteNumber(a.dtiMitigation)) out.thresholds.affordability.dtiMitigation = a.dtiMitigation!;
+      if (isFiniteNumber(a.dtiException)) out.thresholds.affordability.dtiException = a.dtiException!;
+    }
     if (cfg.thresholds.credit) {
       const c = cfg.thresholds.credit;
       if (isFiniteNumber(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin!;
@@ -131,6 +153,13 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
   // scoring
   if (cfg.scoring) {
     if (isFiniteNumber(cfg.scoring.dtiHigh)) out.scoring.dtiHigh = cfg.scoring.dtiHigh!;
+    if (cfg.scoring.affordability) {
+      const a = cfg.scoring.affordability;
+      if (isFiniteNumber(a.meetsRule)) out.scoring.affordability.meetsRule = a.meetsRule!;
+      if (isFiniteNumber(a.partialCredit)) out.scoring.affordability.partialCredit = a.partialCredit!;
+      if (isFiniteNumber(a.dtiException)) out.scoring.affordability.dtiException = a.dtiException!;
+      if (isFiniteNumber(a.fail)) out.scoring.affordability.fail = a.fail!;
+    }
     if (cfg.scoring.credit) {
       const c = cfg.scoring.credit;
       if (isFiniteNumber(c.excellent)) out.scoring.credit.excellent = c.excellent!;
@@ -170,6 +199,12 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
   }
   if (!(out.thresholds.dtiHigh >= 0)) {
     errors.push('thresholds.dtiHigh must be >= 0');
+  }
+  if (!(out.thresholds.affordability.partialCreditRatio <= out.thresholds.affordability.rentRule)) {
+    errors.push('thresholds.affordability.partialCreditRatio must be <= thresholds.affordability.rentRule');
+  }
+  if (!(out.thresholds.affordability.dtiException <= out.thresholds.affordability.dtiMitigation)) {
+    errors.push('thresholds.affordability.dtiException must be <= thresholds.affordability.dtiMitigation');
   }
 
   return { value: out, errors };

@@ -55,6 +55,7 @@ npm start
 ```
 {
   "income": 50000,
+  "monthly_rent": 1500,
   "debt": 15000,
   "credit_score": 720,
   "rental_history": { "evictions": 0, "late_payments": 2 },
@@ -70,6 +71,11 @@ npm start
 ```
 
 UI: Navigate to `/screening/calculator` to use a form that calls this API.
+
+### Income fairness audit
+
+- Run `npm run audit:affordability` to compare strict 3× rent enforcement with the tiered affordability scoring model.
+- See [docs/affordabilityPolicy.md](docs/affordabilityPolicy.md) for methodology, results, and policy guidance.
 
 ## Project Structure
 
