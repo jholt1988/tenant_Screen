@@ -2,9 +2,17 @@ export type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 import type { ScreeningConfig } from './screeningConfig';
 import { defaultScreeningConfig } from './screeningConfig';
 
+export type EvictionOutcome = 'filed' | 'dismissed' | 'settled' | 'judgment';
+
+export interface EvictionFiling {
+  filed_at: string; // ISO date the filing occurred
+  outcome: EvictionOutcome;
+}
+
 export interface RentalHistory {
-  evictions: number; // number of evictions
+  evictions: number; // number of eviction judgments on record
   late_payments: number; // number of late payments
+  eviction_filings?: EvictionFiling[]; // optional detailed history of filings
 }
 
 export interface CriminalBackground {
@@ -81,12 +89,64 @@ export function evaluateCreditScore(credit_score: number, config?: ScreeningConf
   return 2; // High risk
 }
 
+function yearsSince(dateStr: string, reference: Date): number | null {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return null;
+  const diffMs = reference.getTime() - parsed.getTime();
+  if (diffMs <= 0) return 0;
+  return diffMs / (1000 * 60 * 60 * 24 * 365.25);
+}
+
+function outcomeBasePoints(outcome: EvictionOutcome, config: ScreeningConfig): number {
+  const { evictionOutcomePoints, evictionPoints } = config.scoring.rental;
+  if (!evictionOutcomePoints) return evictionPoints;
+  switch (outcome) {
+    case 'dismissed':
+      return evictionOutcomePoints.dismissed;
+    case 'settled':
+      return evictionOutcomePoints.settled;
+    case 'judgment':
+      return evictionOutcomePoints.judgment;
+    default:
+      return evictionOutcomePoints.filing;
+  }
+}
+
 export function evaluateRentalHistory(rental_history: RentalHistory, config?: ScreeningConfig): number {
   let risk_score = 0;
   if (config) {
-    if (rental_history.evictions > 0) risk_score += config.scoring.rental.evictionPoints;
-    if (rental_history.late_payments > config.scoring.rental.latePaymentsThreshold) {
-      risk_score += config.scoring.rental.latePaymentsPoints;
+    const rentalScoring = config.scoring.rental;
+    const filings = rental_history.eviction_filings;
+
+    if (filings && filings.length > 0 && rentalScoring.evictionOutcomePoints) {
+      const lookback = config.thresholds.rental?.evictionLookbackYears ?? Infinity;
+      const floor = rentalScoring.evictionTimeDecayFloor ?? 0;
+      const now = new Date();
+
+      for (const filing of filings) {
+        const base = outcomeBasePoints(filing.outcome, config);
+        let multiplier = 1;
+
+        if (Number.isFinite(lookback) && lookback > 0) {
+          const years = yearsSince(filing.filed_at, now);
+          if (years === null) {
+            multiplier = 1;
+          } else if (years >= lookback) {
+            multiplier = 0;
+          } else {
+            const decay = 1 - years / lookback;
+            multiplier = Math.max(floor, decay);
+          }
+        }
+
+        risk_score += base * multiplier;
+      }
+    } else if (rental_history.evictions > 0) {
+      risk_score += rentalScoring.evictionPoints * rental_history.evictions;
+    }
+
+    if (rental_history.late_payments > rentalScoring.latePaymentsThreshold) {
+      risk_score += rentalScoring.latePaymentsPoints;
     }
     return risk_score;
   }
