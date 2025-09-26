@@ -106,7 +106,7 @@ export default function ScreeningPage() {
                   ✗ Unable to verify current employment
                 </p>
                 <p className="text-sm text-red-700">
-                  ⚠ Income below 3x rent requirement
+                  ⚠ Income below affordability threshold (3× rent or mitigated DTI required)
                 </p>
               </div>
             </div>

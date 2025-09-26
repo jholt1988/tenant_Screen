@@ -1,6 +1,12 @@
 export interface ScreeningConfig {
   thresholds: {
     dtiHigh: number; // ratio above which DTI adds points
+    affordability: {
+      rentRule: number; // minimum income-to-rent ratio for full credit
+      partialCreditRatio: number; // ratio where partial credit can be applied
+      dtiMitigation: number; // maximum DTI to earn partial credit
+      dtiException: number; // maximum DTI for alternative affordability consideration
+    };
     credit: {
       excellentMin: number; // inclusive
       goodMin: number; // inclusive
@@ -8,6 +14,12 @@ export interface ScreeningConfig {
   };
   scoring: {
     dtiHigh: number; // points when DTI exceeds thresholds.dtiHigh
+    affordability: {
+      meetsRule: number;
+      partialCredit: number;
+      dtiException: number;
+      fail: number;
+    };
     credit: { excellent: number; good: number; poor: number };
     rental: {
       evictionPoints: number;
@@ -26,10 +38,17 @@ export interface ScreeningConfig {
 export const defaultScreeningConfig: ScreeningConfig = {
   thresholds: {
     dtiHigh: 0.4,
+    affordability: {
+      rentRule: 3,
+      partialCreditRatio: 2.5,
+      dtiMitigation: 0.36,
+      dtiException: 0.3,
+    },
     credit: { excellentMin: 750, goodMin: 650 },
   },
   scoring: {
     dtiHigh: 2,
+    affordability: { meetsRule: 0, partialCredit: 1, dtiException: 2, fail: 4 },
     credit: { excellent: 0, good: 1, poor: 2 },
     rental: { evictionPoints: 3, latePaymentsThreshold: 3, latePaymentsPoints: 2 },
     criminal: { hasRecordPoints: 3 },
