@@ -1,10 +1,15 @@
+
 import type { TenantData, TenantScreeningResult } from './screening';
+
+
+
 
 export interface AuditEntry {
   id: string;
   timestamp: string; // ISO
   input: TenantData;
   result: TenantScreeningResult;
+
 }
 
 const MAX = 50;

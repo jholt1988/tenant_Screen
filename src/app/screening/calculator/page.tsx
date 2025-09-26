@@ -7,6 +7,9 @@ import { defaultScreeningConfig } from '@/lib/screeningConfig';
 import type { TenantScreeningResult } from '@/lib/screening';
 import type { AuditEntry } from '@/lib/audit';
 
+import type { RiskBreakdown } from '@/lib/screening';
+
+
 function NumberField({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
   return (
     <label className="block text-sm">
@@ -23,13 +26,20 @@ function NumberField({ label, value, onChange }: { label: string; value: string;
 
 type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 
+interface CriminalRecordForm {
+  severity: 'felony' | 'misdemeanor';
+  category: 'violent' | 'property' | 'drug' | 'other';
+  years_since: string;
+  description: string;
+}
+
 interface FormState {
   income: string;
   monthly_rent: string;
   debt: string;
   credit_score: string;
   rental_history: { evictions: string; late_payments: string };
-  criminal_background: { has_criminal_record: boolean; type_of_crime: string };
+  criminal_background: { has_criminal_record: boolean; summary: string; records: CriminalRecordForm[] };
   employment_status: EmploymentStatus;
 }
 
@@ -40,10 +50,12 @@ export default function ScreeningCalculatorPage() {
     debt: '15000',
     credit_score: '720',
     rental_history: { evictions: '0', late_payments: '2' },
-    criminal_background: { has_criminal_record: false, type_of_crime: '' },
+    criminal_background: { has_criminal_record: false, summary: '', records: [] },
     employment_status: 'full-time',
   });
+
   const [result, setResult] = useState<TenantScreeningResult | null>(null);
+
   const [errors, setErrors] = useState<string[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [audits, setAudits] = useState<AuditEntry[] | null>(null);
@@ -71,10 +83,24 @@ export default function ScreeningCalculatorPage() {
       },
       criminal_background: {
         has_criminal_record: form.criminal_background.has_criminal_record,
-        type_of_crime: form.criminal_background.has_criminal_record ? form.criminal_background.type_of_crime : null,
+        type_of_crime:
+          form.criminal_background.has_criminal_record && form.criminal_background.summary
+            ? form.criminal_background.summary
+            : null,
       },
       employment_status: form.employment_status,
     };
+
+    if (form.criminal_background.has_criminal_record) {
+      payload.criminal_background.records = form.criminal_background.records
+        .map((rec) => ({
+          severity: rec.severity,
+          category: rec.category,
+          years_since: Number(rec.years_since),
+          description: rec.description.trim() ? rec.description.trim() : undefined,
+        }))
+        .filter((rec) => Number.isFinite(rec.years_since) && rec.years_since >= 0);
+    }
 
     if (customEnabled) {
       payload.config = fromConfigForm(configForm);
@@ -131,6 +157,20 @@ export default function ScreeningCalculatorPage() {
           excellentMin: String(cfg.thresholds.credit.excellentMin),
           goodMin: String(cfg.thresholds.credit.goodMin),
         },
+
+        rental: {
+          evictionLookbackYears: String(
+            cfg.thresholds.rental?.evictionLookbackYears ??
+              defaultScreeningConfig.thresholds.rental?.evictionLookbackYears ??
+              5,
+          ),
+
+        criminal: {
+          violentFelonyLookbackYears: String(cfg.thresholds.criminal.violentFelonyLookbackYears),
+          felonyLookbackYears: String(cfg.thresholds.criminal.felonyLookbackYears),
+          misdemeanorLookbackYears: String(cfg.thresholds.criminal.misdemeanorLookbackYears),
+
+        },
       },
       scoring: {
         dtiHigh: String(cfg.scoring.dtiHigh),
@@ -149,8 +189,41 @@ export default function ScreeningCalculatorPage() {
           evictionPoints: String(cfg.scoring.rental.evictionPoints),
           latePaymentsThreshold: String(cfg.scoring.rental.latePaymentsThreshold),
           latePaymentsPoints: String(cfg.scoring.rental.latePaymentsPoints),
+          evictionOutcomePoints: {
+            filing: String(
+              cfg.scoring.rental.evictionOutcomePoints?.filing ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.filing ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            dismissed: String(
+              cfg.scoring.rental.evictionOutcomePoints?.dismissed ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.dismissed ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            settled: String(
+              cfg.scoring.rental.evictionOutcomePoints?.settled ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.settled ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+            judgment: String(
+              cfg.scoring.rental.evictionOutcomePoints?.judgment ??
+                defaultScreeningConfig.scoring.rental.evictionOutcomePoints?.judgment ??
+                cfg.scoring.rental.evictionPoints,
+            ),
+          },
+          evictionTimeDecayFloor: String(
+            cfg.scoring.rental.evictionTimeDecayFloor ??
+              defaultScreeningConfig.scoring.rental.evictionTimeDecayFloor ??
+              0,
+          ),
         },
-        criminal: { hasRecordPoints: String(cfg.scoring.criminal.hasRecordPoints) },
+        criminal: {
+          cleanRecordPoints: String(cfg.scoring.criminal.cleanRecordPoints),
+          staleRecordPoints: String(cfg.scoring.criminal.staleRecordPoints),
+          recentMisdemeanorPoints: String(cfg.scoring.criminal.recentMisdemeanorPoints),
+          recentFelonyPoints: String(cfg.scoring.criminal.recentFelonyPoints),
+          recentViolentFelonyPoints: String(cfg.scoring.criminal.recentViolentFelonyPoints),
+        },
         employment: {
           fullTime: String(cfg.scoring.employment.fullTime),
           partTime: String(cfg.scoring.employment.partTime),
@@ -178,6 +251,15 @@ export default function ScreeningCalculatorPage() {
           excellentMin: Number(cf.thresholds.credit.excellentMin),
           goodMin: Number(cf.thresholds.credit.goodMin),
         },
+
+        rental: {
+          evictionLookbackYears: Number(cf.thresholds.rental.evictionLookbackYears),
+
+        criminal: {
+          violentFelonyLookbackYears: Number(cf.thresholds.criminal.violentFelonyLookbackYears),
+          felonyLookbackYears: Number(cf.thresholds.criminal.felonyLookbackYears),
+          misdemeanorLookbackYears: Number(cf.thresholds.criminal.misdemeanorLookbackYears),
+        },
       },
       scoring: {
         dtiHigh: Number(cf.scoring.dtiHigh),
@@ -196,8 +278,21 @@ export default function ScreeningCalculatorPage() {
           evictionPoints: Number(cf.scoring.rental.evictionPoints),
           latePaymentsThreshold: Number(cf.scoring.rental.latePaymentsThreshold),
           latePaymentsPoints: Number(cf.scoring.rental.latePaymentsPoints),
+          evictionOutcomePoints: {
+            filing: Number(cf.scoring.rental.evictionOutcomePoints.filing),
+            dismissed: Number(cf.scoring.rental.evictionOutcomePoints.dismissed),
+            settled: Number(cf.scoring.rental.evictionOutcomePoints.settled),
+            judgment: Number(cf.scoring.rental.evictionOutcomePoints.judgment),
+          },
+          evictionTimeDecayFloor: Number(cf.scoring.rental.evictionTimeDecayFloor),
         },
-        criminal: { hasRecordPoints: Number(cf.scoring.criminal.hasRecordPoints) },
+        criminal: {
+          cleanRecordPoints: Number(cf.scoring.criminal.cleanRecordPoints),
+          staleRecordPoints: Number(cf.scoring.criminal.staleRecordPoints),
+          recentMisdemeanorPoints: Number(cf.scoring.criminal.recentMisdemeanorPoints),
+          recentFelonyPoints: Number(cf.scoring.criminal.recentFelonyPoints),
+          recentViolentFelonyPoints: Number(cf.scoring.criminal.recentViolentFelonyPoints),
+        },
         employment: {
           fullTime: Number(cf.scoring.employment.fullTime),
           partTime: Number(cf.scoring.employment.partTime),
@@ -222,11 +317,13 @@ export default function ScreeningCalculatorPage() {
       'evictions',
       'late_payments',
       'has_criminal_record',
+
       'type_of_crime',
       'employment_status',
       'risk_score',
       'decision',
       'primary_risk_factor',
+
     ];
     const rows = audits.map((a) => [
       a.timestamp,
@@ -238,6 +335,13 @@ export default function ScreeningCalculatorPage() {
       a.input.rental_history?.late_payments ?? '',
       a.input.criminal_background?.has_criminal_record ?? '',
       a.input.criminal_background?.type_of_crime ?? '',
+      (a.input.criminal_background?.records ?? [])
+        .map(
+          (rec: any) =>
+            `${rec.severity}:${rec.category}:${rec.years_since}${rec.description ? ` (${rec.description})` : ''}`,
+        )
+        .join('; '),
+      a.breakdown?.criminal?.requiresIndividualReview ?? '',
       a.input.employment_status ?? '',
       a.result.risk_score,
       a.result.decision,
@@ -303,6 +407,19 @@ export default function ScreeningCalculatorPage() {
         if (isNum(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin;
         if (isNum(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin;
       }
+
+      if (override.thresholds.rental) {
+        const r = override.thresholds.rental;
+        if (isNum(r.evictionLookbackYears)) out.thresholds.rental.evictionLookbackYears = r.evictionLookbackYears;
+
+      if (override.thresholds.criminal) {
+        const cr = override.thresholds.criminal;
+        if (isNum(cr.violentFelonyLookbackYears))
+          out.thresholds.criminal.violentFelonyLookbackYears = cr.violentFelonyLookbackYears;
+        if (isNum(cr.felonyLookbackYears)) out.thresholds.criminal.felonyLookbackYears = cr.felonyLookbackYears;
+        if (isNum(cr.misdemeanorLookbackYears)) out.thresholds.criminal.misdemeanorLookbackYears = cr.misdemeanorLookbackYears;
+
+      }
     }
     if (override.scoring) {
       if (isNum(override.scoring.dtiHigh)) out.scoring.dtiHigh = override.scoring.dtiHigh;
@@ -324,10 +441,28 @@ export default function ScreeningCalculatorPage() {
         if (isNum(r.evictionPoints)) out.scoring.rental.evictionPoints = r.evictionPoints;
         if (isNum(r.latePaymentsThreshold)) out.scoring.rental.latePaymentsThreshold = r.latePaymentsThreshold;
         if (isNum(r.latePaymentsPoints)) out.scoring.rental.latePaymentsPoints = r.latePaymentsPoints;
+        if (r.evictionOutcomePoints) {
+          const eo = out.scoring.rental.evictionOutcomePoints ?? {
+            ...defaultScreeningConfig.scoring.rental.evictionOutcomePoints,
+          };
+          const overridePoints = r.evictionOutcomePoints;
+          if (isNum(overridePoints.filing)) eo.filing = overridePoints.filing;
+          if (isNum(overridePoints.dismissed)) eo.dismissed = overridePoints.dismissed;
+          if (isNum(overridePoints.settled)) eo.settled = overridePoints.settled;
+          if (isNum(overridePoints.judgment)) eo.judgment = overridePoints.judgment;
+          out.scoring.rental.evictionOutcomePoints = eo;
+        }
+        if (isNum(r.evictionTimeDecayFloor)) out.scoring.rental.evictionTimeDecayFloor = r.evictionTimeDecayFloor;
       }
       if (override.scoring.criminal) {
         const cr = override.scoring.criminal;
-        if (isNum(cr.hasRecordPoints)) out.scoring.criminal.hasRecordPoints = cr.hasRecordPoints;
+        if (isNum(cr.cleanRecordPoints)) out.scoring.criminal.cleanRecordPoints = cr.cleanRecordPoints;
+        if (isNum(cr.staleRecordPoints)) out.scoring.criminal.staleRecordPoints = cr.staleRecordPoints;
+        if (isNum(cr.recentMisdemeanorPoints))
+          out.scoring.criminal.recentMisdemeanorPoints = cr.recentMisdemeanorPoints;
+        if (isNum(cr.recentFelonyPoints)) out.scoring.criminal.recentFelonyPoints = cr.recentFelonyPoints;
+        if (isNum(cr.recentViolentFelonyPoints))
+          out.scoring.criminal.recentViolentFelonyPoints = cr.recentViolentFelonyPoints;
       }
       if (override.scoring.employment) {
         const e = override.scoring.employment;
@@ -451,23 +586,151 @@ export default function ScreeningCalculatorPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Background & Employment</h2>
             <div className="grid md:grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-3">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <input
                     type="checkbox"
                     checked={form.criminal_background.has_criminal_record}
-                    onChange={(e) => setForm({ ...form, criminal_background: { ...form.criminal_background, has_criminal_record: e.target.checked } })}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setForm({
+                        ...form,
+                        criminal_background: {
+                          ...form.criminal_background,
+                          has_criminal_record: checked,
+                          records: checked ? form.criminal_background.records.length ? form.criminal_background.records : [{ severity: 'felony', category: 'property', years_since: '0', description: '' }] : [],
+                        },
+                      });
+                    }}
                   />
                   Has Criminal Record
                 </label>
-                <input
-                  type="text"
-                  placeholder="Type of crime (optional)"
-                  value={form.criminal_background.type_of_crime}
-                  onChange={(e) => setForm({ ...form, criminal_background: { ...form.criminal_background, type_of_crime: e.target.value } })}
-                  className="mt-2 w-full border rounded px-3 py-2"
-                  disabled={!form.criminal_background.has_criminal_record}
-                />
+
+                {form.criminal_background.has_criminal_record && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Summary / Context</label>
+                      <textarea
+                        className="w-full border rounded px-3 py-2"
+                        placeholder="Briefly describe the circumstances or rehabilitation steps"
+                        value={form.criminal_background.summary}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            criminal_background: { ...form.criminal_background, summary: e.target.value },
+                          })
+                        }
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      {form.criminal_background.records.map((record, idx) => (
+                        <div key={idx} className="border rounded-lg p-3 space-y-3 bg-gray-50">
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-sm font-semibold text-gray-700">Offense {idx + 1}</h3>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = form.criminal_background.records.filter((_, i) => i !== idx);
+                                setForm({
+                                  ...form,
+                                  criminal_background: {
+                                    ...form.criminal_background,
+                                    records: next.length ? next : [{ severity: 'felony', category: 'property', years_since: '0', description: '' }],
+                                  },
+                                });
+                              }}
+                              className="text-xs text-red-600 hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Severity</label>
+                              <select
+                                className="w-full border rounded px-3 py-2"
+                                value={record.severity}
+                                onChange={(e) => {
+                                  const next = [...form.criminal_background.records];
+                                  next[idx] = { ...next[idx], severity: e.target.value as 'felony' | 'misdemeanor' };
+                                  setForm({ ...form, criminal_background: { ...form.criminal_background, records: next } });
+                                }}
+                              >
+                                <option value="felony">Felony</option>
+                                <option value="misdemeanor">Misdemeanor</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                              <select
+                                className="w-full border rounded px-3 py-2"
+                                value={record.category}
+                                onChange={(e) => {
+                                  const next = [...form.criminal_background.records];
+                                  next[idx] = { ...next[idx], category: e.target.value as CriminalRecordForm['category'] };
+                                  setForm({ ...form, criminal_background: { ...form.criminal_background, records: next } });
+                                }}
+                              >
+                                <option value="violent">Violent</option>
+                                <option value="property">Property</option>
+                                <option value="drug">Drug</option>
+                                <option value="other">Other</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Years Since Conviction</label>
+                              <input
+                                type="number"
+                                min={0}
+                                className="w-full border rounded px-3 py-2"
+                                value={record.years_since}
+                                onChange={(e) => {
+                                  const next = [...form.criminal_background.records];
+                                  next[idx] = { ...next[idx], years_since: e.target.value };
+                                  setForm({ ...form, criminal_background: { ...form.criminal_background, records: next } });
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Offense Description</label>
+                              <input
+                                type="text"
+                                className="w-full border rounded px-3 py-2"
+                                value={record.description}
+                                onChange={(e) => {
+                                  const next = [...form.criminal_background.records];
+                                  next[idx] = { ...next[idx], description: e.target.value };
+                                  setForm({ ...form, criminal_background: { ...form.criminal_background, records: next } });
+                                }}
+                                placeholder="e.g., Burglary, rehabilitation completed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            criminal_background: {
+                              ...form.criminal_background,
+                              records: [
+                                ...form.criminal_background.records,
+                                { severity: 'felony', category: 'property', years_since: '0', description: '' },
+                              ],
+                            },
+                          })
+                        }
+                      >
+                        Add Another Offense
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
@@ -495,6 +758,7 @@ export default function ScreeningCalculatorPage() {
           )}
 
           {result && (
+
             <div className="space-y-4">
               <div
                 className={
@@ -601,6 +865,31 @@ export default function ScreeningCalculatorPage() {
                     Tip: Document outreach attempts and keep supporting evidence with the applicant file.
                   </p>
                 </section>
+            <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
+              <p className="font-medium">Risk Score: {result.risk_score}</p>
+              <p className="font-medium">Decision: {result.decision}</p>
+              {result.breakdown?.criminal && (
+                <div className="mt-2 text-sm text-green-900 space-y-2">
+                  <p>
+                    Criminal history requires individualized review:{' '}
+                    <span className="font-semibold">
+                      {result.breakdown.criminal.requiresIndividualReview ? 'Yes' : 'No'}
+                    </span>
+                  </p>
+                  {result.breakdown.criminal.rationale.length > 0 && (
+                    <ul className="list-disc list-inside space-y-1">
+                      {result.breakdown.criminal.rationale.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {result.breakdown.criminal.disregardedRecords.length > 0 && (
+                    <p className="text-xs text-green-700">
+                      Older records documented but not scored: {result.breakdown.criminal.disregardedRecords.length}
+                    </p>
+                  )}
+                </div>
+
               )}
             </div>
           )}
@@ -619,7 +908,7 @@ export default function ScreeningCalculatorPage() {
                   debt: '15000',
                   credit_score: '720',
                   rental_history: { evictions: '0', late_payments: '2' },
-                  criminal_background: { has_criminal_record: false, type_of_crime: '' },
+                  criminal_background: { has_criminal_record: false, summary: '', records: [] },
                   employment_status: 'full-time',
                 });
                 setErrors(null);
@@ -679,6 +968,27 @@ export default function ScreeningCalculatorPage() {
                       />
                       <NumberField label="Credit Excellent Min" value={configForm.thresholds.credit.excellentMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, excellentMin: v}}})} />
                       <NumberField label="Credit Good Min" value={configForm.thresholds.credit.goodMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, goodMin: v}}})} />
+                      <NumberField
+
+                        label="Eviction Lookback Years"
+                        value={configForm.thresholds.rental.evictionLookbackYears}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, rental: { evictionLookbackYears: v }}})}
+
+                        label="Violent Felony Lookback (yrs)"
+                        value={configForm.thresholds.criminal.violentFelonyLookbackYears}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, violentFelonyLookbackYears: v}}})}
+                      />
+                      <NumberField
+                        label="Felony Lookback (yrs)"
+                        value={configForm.thresholds.criminal.felonyLookbackYears}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, felonyLookbackYears: v}}})}
+                      />
+                      <NumberField
+                        label="Misdemeanor Lookback (yrs)"
+                        value={configForm.thresholds.criminal.misdemeanorLookbackYears}
+                        onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, misdemeanorLookbackYears: v}}})}
+
+                      />
                     </div>
                   </section>
                   <section>
@@ -709,9 +1019,38 @@ export default function ScreeningCalculatorPage() {
                       <NumberField label="Credit Good Points" value={configForm.scoring.credit.good} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, good: v}}})} />
                       <NumberField label="Credit Poor Points" value={configForm.scoring.credit.poor} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, credit: {...configForm.scoring.credit, poor: v}}})} />
                       <NumberField label="Eviction Points" value={configForm.scoring.rental.evictionPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionPoints: v}}})} />
+                      <NumberField
+                        label="Eviction Filing Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.filing}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, filing: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Dismissed Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.dismissed}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, dismissed: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Settled Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.settled}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, settled: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Judgment Points"
+                        value={configForm.scoring.rental.evictionOutcomePoints.judgment}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionOutcomePoints: {...configForm.scoring.rental.evictionOutcomePoints, judgment: v}}}})}
+                      />
+                      <NumberField
+                        label="Eviction Time Decay Floor"
+                        value={configForm.scoring.rental.evictionTimeDecayFloor}
+                        onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, evictionTimeDecayFloor: v}}})}
+                      />
                       <NumberField label="Late Pmts Threshold" value={configForm.scoring.rental.latePaymentsThreshold} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, latePaymentsThreshold: v}}})} />
                       <NumberField label="Late Pmts Points" value={configForm.scoring.rental.latePaymentsPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, rental: {...configForm.scoring.rental, latePaymentsPoints: v}}})} />
-                      <NumberField label="Criminal Record Points" value={configForm.scoring.criminal.hasRecordPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, hasRecordPoints: v}}})} />
+                      <NumberField label="Clean Record Points" value={configForm.scoring.criminal.cleanRecordPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, cleanRecordPoints: v}}})} />
+                      <NumberField label="Stale Record Points" value={configForm.scoring.criminal.staleRecordPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, staleRecordPoints: v}}})} />
+                      <NumberField label="Recent Misdemeanor Points" value={configForm.scoring.criminal.recentMisdemeanorPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, recentMisdemeanorPoints: v}}})} />
+                      <NumberField label="Recent Felony Points" value={configForm.scoring.criminal.recentFelonyPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, recentFelonyPoints: v}}})} />
+                      <NumberField label="Violent Felony Points" value={configForm.scoring.criminal.recentViolentFelonyPoints} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, criminal: {...configForm.scoring.criminal, recentViolentFelonyPoints: v}}})} />
                       <NumberField label="Employment Full-time" value={configForm.scoring.employment.fullTime} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, employment: {...configForm.scoring.employment, fullTime: v}}})} />
                       <NumberField label="Employment Part-time" value={configForm.scoring.employment.partTime} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, employment: {...configForm.scoring.employment, partTime: v}}})} />
                       <NumberField label="Employment Unemployed" value={configForm.scoring.employment.unemployed} onChange={(v)=>setConfigForm({...configForm, scoring: {...configForm.scoring, employment: {...configForm.scoring.employment, unemployed: v}}})} />
@@ -764,6 +1103,8 @@ export default function ScreeningCalculatorPage() {
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decision</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criminal Notes</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -789,6 +1130,12 @@ export default function ScreeningCalculatorPage() {
                         >
                           {a.result.decision}
                         </span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                        {a.breakdown?.criminal?.requiresIndividualReview ? 'Yes' : 'No'}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-600 max-w-xs">
+                        {a.breakdown?.criminal?.rationale?.[0] ?? ''}
                       </td>
                     </tr>
                   ))}

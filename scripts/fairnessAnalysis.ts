@@ -60,29 +60,39 @@ function formatNumber(value: number): string {
 }
 
 function buildSchemes(): Scheme[] {
-  const baseline = cloneConfig(defaultScreeningConfig);
+  const legacy = cloneConfig(defaultScreeningConfig);
+  delete legacy.thresholds.rental;
+  delete legacy.scoring.rental.evictionOutcomePoints;
+  delete legacy.scoring.rental.evictionTimeDecayFloor;
 
-  const reducedCredit = cloneConfig(defaultScreeningConfig);
+  const outcomeSensitive = cloneConfig(defaultScreeningConfig);
+
+  const reducedCredit = cloneConfig(outcomeSensitive);
   reducedCredit.scoring.credit = { excellent: 0, good: 0.5, poor: 1 };
 
-  const utilityAugmented = cloneConfig(defaultScreeningConfig);
+  const utilityAugmented = cloneConfig(outcomeSensitive);
   utilityAugmented.scoring.credit = { excellent: 0, good: 0.5, poor: 1.25 };
 
   const schemes: Scheme[] = [
     {
-      name: 'Baseline – Current Weights',
-      description: 'Production QuickLease credit scoring weights (0 / 1 / 2 points).',
-      config: baseline,
+      name: 'Legacy Eviction Penalty',
+      description: 'Ignores filing outcomes and only penalizes recorded eviction judgments.',
+      config: legacy,
     },
     {
-      name: 'Reduced Credit Weighting (50% penalty)',
-      description: 'Halves the credit penalties to lessen their contribution to the total risk score.',
+      name: 'Outcome-Sensitive Eviction Scoring (Proposed)',
+      description: 'Applies partial credit and time decay based on eviction filing outcomes.',
+      config: outcomeSensitive,
+    },
+    {
+      name: 'Proposed + Reduced Credit Weighting',
+      description: 'Pairs the outcome-sensitive eviction scoring with a 50% reduction in credit penalties.',
       config: reducedCredit,
     },
     {
-      name: 'Credit + Utility Payment Adjustment',
+      name: 'Proposed + Utility Payment Adjustment',
       description:
-        'Moderate credit penalties while granting offsets for strong utility payment history and mild surcharges for low payment reliability.',
+        'Retains the outcome-sensitive eviction scoring, moderates credit penalties, and adds offsets for strong utility payment history.',
       config: utilityAugmented,
       adjustRisk: (applicant, risk) => {
         const utility = applicant.utility_payment_score ?? 0.5;
@@ -191,13 +201,13 @@ function buildNarrative(results: SchemeResult[]): string {
 
   lines.push('# QuickLease Tenant Score Fairness Audit');
   lines.push('');
-  lines.push('This report quantifies the effect of credit weighting on applicant outcomes segmented by protected-class proxy groups and compares mitigation options.');
+  lines.push('This report evaluates revised eviction-history scoring alongside credit mitigation options, segmented by protected-class proxy groups.');
   lines.push('');
 
   lines.push('## Data Set');
   lines.push('');
   lines.push(
-    'Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, rental history, employment status, and utility payment reliability.',
+    'Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, detailed eviction filing outcomes, rental history, employment status, and utility payment reliability.',
   );
   lines.push('');
   lines.push('Current scoring weights, including the credit component, are defined in `src/lib/screeningConfig.ts`.');
@@ -227,37 +237,40 @@ function buildNarrative(results: SchemeResult[]): string {
     lines.push('');
   }
 
-  const baseline = results[0];
-  const reduced = results[1];
-  const utility = results[2];
+  const legacy = results.find((r) => r.scheme.name === 'Legacy Eviction Penalty');
+  const proposed = results.find((r) => r.scheme.name === 'Outcome-Sensitive Eviction Scoring (Proposed)');
+  const reduced = results.find((r) => r.scheme.name === 'Proposed + Reduced Credit Weighting');
+  const utility = results.find((r) => r.scheme.name === 'Proposed + Utility Payment Adjustment');
 
   lines.push('## Comparative Insights');
   lines.push('');
-  lines.push(
-    `- Baseline weights show the strongest disparate impact, with approval ratios for LegacyRedlinedZip and ImmigrantCommunity groups falling below the 0.80 threshold (${formatNumber(
-      baseline.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
-    )} and ${formatNumber(baseline.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0)} respectively).`,
-  );
-  lines.push(
-    `- Reducing credit penalties boosts ImmigrantCommunity parity to ${formatNumber(
-      reduced.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0,
-    )} while maintaining similar approval throughput (${toPercent(baseline.overallApprovalRate)} → ${toPercent(
-      reduced.overallApprovalRate,
-    )}); LegacyRedlinedZip remains constrained (${formatNumber(
-      reduced.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
-    )}).`,
-  );
-  lines.push(
-    `- Utility adjustments decrease average risk scores and widen access for applicants with strong payment histories, yet LegacyRedlinedZip still trails at a ${formatNumber(
-      utility.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
-    )} disparate impact ratio, signaling the need for additional policy levers beyond credit data.`,
-  );
+  if (legacy && proposed) {
+    lines.push(
+      `- Applying outcome-sensitive eviction scoring introduces penalties for dismissed or settled filings, lowering LegacyRedlinedZip disparate impact from ${formatNumber(
+        legacy.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
+      )} to ${formatNumber(proposed.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0)}; mitigation is required before rollout.`,
+    );
+  }
+  if (proposed && reduced) {
+    lines.push(
+      `- Layering reduced credit penalties on the proposed eviction scoring improves ImmigrantCommunity parity to ${formatNumber(
+        reduced.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0,
+      )} while keeping approvals near ${toPercent(proposed.overallApprovalRate)} → ${toPercent(reduced.overallApprovalRate)}.`,
+    );
+  }
+  if (utility) {
+    lines.push(
+      `- Utility adjustments further cut average risk for applicants with strong payment reliability, yet LegacyRedlinedZip remains below the 0.80 threshold (disparate impact ${formatNumber(
+        utility.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
+      )}).`,
+    );
+  }
 
   lines.push('');
   lines.push('## Recommendations');
   lines.push('');
-  lines.push('- Adopt the utility-adjusted weighting in a controlled pilot to validate sustained fairness gains without materially increasing risk.');
-  lines.push('- Expand data collection on alternative credit indicators (utility, rental payment history) to support robust scoring beyond traditional credit bureaus.');
+  lines.push('- Only adopt the outcome-sensitive eviction scoring with accompanying fairness guardrails, given the disparate impact observed on LegacyRedlinedZip applicants.');
+  lines.push('- Pilot the reduced-credit and utility adjustments in tandem to offset the added eviction penalties while monitoring risk exposure.');
   lines.push('- Continue monitoring approval ratios quarterly and flag any proxy group that drops below a 0.80 disparate impact ratio.');
 
   lines.push('');
