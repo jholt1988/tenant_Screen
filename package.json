@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "audit:affordability": "tsx scripts/runAffordabilityAudit.ts"
+    "audit:affordability": "tsx scripts/runAffordabilityAudit.
+    "analyze:fairness": "ts-node --project tsconfig.fairness.json scripts/fairnessAnalys
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -24,6 +25,7 @@
     "tailwindcss": "^3.4.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "tsx": "^4.10.0"
+    "tsx": "^4.10.0
+    "ts-node": "^10.9.2
   }
 }
