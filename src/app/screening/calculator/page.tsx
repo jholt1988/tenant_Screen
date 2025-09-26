@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { defaultScreeningConfig } from '@/lib/screeningConfig';
+import type { TenantScreeningResult } from '@/lib/screening';
+import type { AuditEntry } from '@/lib/audit';
 
 function NumberField({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
   return (
@@ -41,10 +43,10 @@ export default function ScreeningCalculatorPage() {
     criminal_background: { has_criminal_record: false, type_of_crime: '' },
     employment_status: 'full-time',
   });
-  const [result, setResult] = useState<{ risk_score: number; decision: string } | null>(null);
+  const [result, setResult] = useState<TenantScreeningResult | null>(null);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [audits, setAudits] = useState<any[] | null>(null);
+  const [audits, setAudits] = useState<AuditEntry[] | null>(null);
   const [loadingAudits, setLoadingAudits] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [customEnabled, setCustomEnabled] = useState(false);
@@ -88,7 +90,7 @@ export default function ScreeningCalculatorPage() {
       if (!res.ok) {
         setErrors(data?.errors ?? [data?.error ?? 'Something went wrong']);
       } else {
-        setResult(data);
+        setResult(data as TenantScreeningResult);
       }
     } catch (err) {
       setErrors(['Network or server error']);
@@ -102,7 +104,7 @@ export default function ScreeningCalculatorPage() {
     try {
       const res = await fetch('/api/screening');
       const data = await res.json();
-      setAudits(Array.isArray(data?.audits) ? data.audits : []);
+      setAudits(Array.isArray(data?.audits) ? (data.audits as AuditEntry[]) : []);
     } catch {
       setAudits([]);
     } finally {
@@ -212,7 +214,19 @@ export default function ScreeningCalculatorPage() {
   function exportCsv() {
     if (!audits || audits.length === 0) return;
     const headers = [
-      'timestamp','income','monthly_rent','debt','credit_score','evictions','late_payments','has_criminal_record','type_of_crime','employment_status','risk_score','decision'
+      'timestamp',
+      'income',
+      'monthly_rent',
+      'debt',
+      'credit_score',
+      'evictions',
+      'late_payments',
+      'has_criminal_record',
+      'type_of_crime',
+      'employment_status',
+      'risk_score',
+      'decision',
+      'primary_risk_factor',
     ];
     const rows = audits.map((a) => [
       a.timestamp,
@@ -225,8 +239,11 @@ export default function ScreeningCalculatorPage() {
       a.input.criminal_background?.has_criminal_record ?? '',
       a.input.criminal_background?.type_of_crime ?? '',
       a.input.employment_status ?? '',
-      a.risk_score,
-      a.decision,
+      a.result.risk_score,
+      a.result.decision,
+      a.result.breakdown
+        .filter((b) => b.points > 0)
+        .sort((aContrib, bContrib) => bContrib.points - aContrib.points)[0]?.label ?? '',
     ]);
     const csv = [
       headers.join(','),
@@ -478,9 +495,113 @@ export default function ScreeningCalculatorPage() {
           )}
 
           {result && (
-            <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
-              <p className="font-medium">Risk Score: {result.risk_score}</p>
-              <p className="font-medium">Decision: {result.decision}</p>
+            <div className="space-y-4">
+              <div
+                className={
+                  result.decision === 'Approved'
+                    ? 'rounded border border-green-300 bg-green-50 text-green-800 p-4'
+                    : result.decision === 'Flagged for Review'
+                    ? 'rounded border border-yellow-300 bg-yellow-50 text-yellow-800 p-4'
+                    : 'rounded border border-red-300 bg-red-50 text-red-800 p-4'
+                }
+              >
+                <p className="font-semibold text-lg">Risk Score: {result.risk_score}</p>
+                <p className="font-semibold">Decision: {result.decision}</p>
+              </div>
+
+              <section className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+                  Factor Breakdown
+                </h3>
+                <div className="space-y-3">
+                  {result.breakdown.map((contribution, idx) => {
+                    const severityStyles: Record<string, string> = {
+                      positive: 'border-l-4 border-green-400 bg-green-50',
+                      neutral: 'border-l-4 border-slate-300 bg-white',
+                      warning: 'border-l-4 border-yellow-400 bg-yellow-50',
+                      critical: 'border-l-4 border-red-400 bg-red-50',
+                    };
+                    const containerClass = severityStyles[contribution.severity] ?? severityStyles.neutral;
+                    return (
+                      <div key={`${contribution.factor}-${idx}`} className={`${containerClass} p-3 rounded-md`}> 
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-slate-900">{contribution.label}</p>
+                            <p className="text-xs text-slate-500">Source: {contribution.dataSource}</p>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-700">
+                            +{contribution.points} pts
+                          </span>
+                        </div>
+                        {contribution.details && (
+                          <dl className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
+                            {Object.entries(contribution.details).map(([key, value]) => (
+                              <div key={key} className="flex items-center gap-1">
+                                <dt className="uppercase tracking-wide text-[10px] text-slate-500">
+                                  {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:
+                                </dt>
+                                <dd>{String(value)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                        {contribution.recommendedAction && contribution.points > 0 && (
+                          <p className="mt-2 text-xs text-slate-700">
+                            <span className="font-semibold">Suggested action:</span> {contribution.recommendedAction}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {result.adverse_actions.length > 0 && (
+                <section className="border border-red-200 bg-red-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-red-800 uppercase tracking-wide mb-3">
+                    Applicant Adverse-Action Explanations
+                  </h3>
+                  <ul className="space-y-3 text-sm text-red-900">
+                    {result.adverse_actions.map((item, idx) => (
+                      <li key={`${item.factor}-${idx}`} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">{item.reason}</span>
+                          <span className="text-xs font-semibold">+{item.points} pts</span>
+                        </div>
+                        <p className="text-xs text-red-700">Data source: {item.dataSource}</p>
+                        <p className="text-xs">
+                          Recommended next step: <span className="font-medium">{item.recommendedAction}</span>
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {(result.decision === 'Flagged for Review' || result.decision === 'Denied') && (
+                <section className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-amber-800 uppercase tracking-wide mb-2">
+                    Manual Review Checklist
+                  </h3>
+                  <p className="text-sm text-amber-900 mb-2">
+                    Focus on the highest-impact factors below when speaking with the applicant or collecting
+                    documentation.
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-amber-900 space-y-1">
+                    {result.breakdown
+                      .filter((item) => item.points > 0)
+                      .map((item, idx) => (
+                        <li key={`${item.factor}-manual-${idx}`}>
+                          <span className="font-semibold">{item.label}:</span>{' '}
+                          {item.recommendedAction ?? 'Request additional documentation or context.'}
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-amber-700">
+                    Tip: Document outreach attempts and keep supporting evidence with the applicant file.
+                  </p>
+                </section>
+              )}
             </div>
           )}
 
@@ -655,18 +776,18 @@ export default function ScreeningCalculatorPage() {
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.monthly_rent{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.debt{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.credit_score{'}'}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{a.risk_score}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{a.result.risk_score}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <span
                           className={
-                            a.decision === 'Approved'
+                            a.result.decision === 'Approved'
                               ? 'inline-flex px-2 py-1 rounded-full bg-green-100 text-green-700'
-                              : a.decision === 'Flagged for Review'
+                              : a.result.decision === 'Flagged for Review'
                               ? 'inline-flex px-2 py-1 rounded-full bg-yellow-100 text-yellow-700'
                               : 'inline-flex px-2 py-1 rounded-full bg-red-100 text-red-700'
                           }
                         >
-                          {a.decision}
+                          {a.result.decision}
                         </span>
                       </td>
                     </tr>

@@ -71,18 +71,17 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
-    const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
+    const result = tenantScreeningAlgorithm(validation.data, config.value);
 
     // Audit the evaluation in-memory
     logAudit({
       id: randomUUID(),
       timestamp: new Date().toISOString(),
       input: validation.data,
-      risk_score,
-      decision,
+      result,
     });
 
-    return Response.json({ risk_score, decision });
+    return Response.json(result);
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }

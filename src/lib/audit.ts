@@ -1,11 +1,10 @@
-import type { TenantData, Decision } from './screening';
+import type { TenantData, TenantScreeningResult } from './screening';
 
 export interface AuditEntry {
   id: string;
   timestamp: string; // ISO
   input: TenantData;
-  risk_score: number;
-  decision: Decision;
+  result: TenantScreeningResult;
 }
 
 const MAX = 50;
