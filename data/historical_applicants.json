@@ -265,6 +265,7 @@
     "income": 59000,
     "debt": 30000,
     "credit_score": 612,
+
     "rental_history": {
       "evictions": 0,
       "late_payments": 6,
@@ -279,6 +280,7 @@
       "has_criminal_record": true,
       "type_of_crime": "misdemeanor"
     },
+
     "employment_status": "part-time",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",
@@ -340,6 +342,7 @@
     "income": 56000,
     "debt": 25000,
     "credit_score": 598,
+
     "rental_history": {
       "evictions": 1,
       "late_payments": 7,
@@ -358,6 +361,7 @@
       "has_criminal_record": true,
       "type_of_crime": "non-violent"
     },
+
     "employment_status": "unemployed",
     "proxy_group": "LegacyRedlinedZip",
     "proxy_label": "ProtectedProxy",

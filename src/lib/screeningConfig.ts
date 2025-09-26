@@ -11,8 +11,15 @@ export interface ScreeningConfig {
       excellentMin: number; // inclusive
       goodMin: number; // inclusive
     };
+
     rental?: {
       evictionLookbackYears: number; // horizon for applying time decay to filings
+
+    criminal: {
+      violentFelonyLookbackYears: number;
+      felonyLookbackYears: number;
+      misdemeanorLookbackYears: number;
+
     };
   };
   scoring: {
@@ -36,7 +43,13 @@ export interface ScreeningConfig {
       latePaymentsThreshold: number;
       latePaymentsPoints: number;
     };
-    criminal: { hasRecordPoints: number };
+    criminal: {
+      cleanRecordPoints: number;
+      staleRecordPoints: number;
+      recentMisdemeanorPoints: number;
+      recentFelonyPoints: number;
+      recentViolentFelonyPoints: number;
+    };
     employment: { fullTime: number; partTime: number; unemployed: number };
   };
   decision: {
@@ -55,14 +68,22 @@ export const defaultScreeningConfig: ScreeningConfig = {
       dtiException: 0.3,
     },
     credit: { excellentMin: 750, goodMin: 650 },
+
     rental: {
       evictionLookbackYears: 5,
+
+    criminal: {
+      violentFelonyLookbackYears: 10,
+      felonyLookbackYears: 7,
+      misdemeanorLookbackYears: 3,
+
     },
   },
   scoring: {
     dtiHigh: 2,
     affordability: { meetsRule: 0, partialCredit: 1, dtiException: 2, fail: 4 },
     credit: { excellent: 0, good: 1, poor: 2 },
+c
     rental: {
       evictionPoints: 3,
       evictionOutcomePoints: {
@@ -76,6 +97,8 @@ export const defaultScreeningConfig: ScreeningConfig = {
       latePaymentsPoints: 2,
     },
     criminal: { hasRecordPoints: 3 },
+
+
     employment: { fullTime: 0, partTime: 1, unemployed: 2 },
   },
   decision: {

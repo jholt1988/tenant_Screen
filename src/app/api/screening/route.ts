@@ -3,8 +3,12 @@ import {
   tenantScreeningAlgorithm,
   type TenantData,
   type EmploymentStatus,
+
   type EvictionFiling,
   type EvictionOutcome,
+
+  type CriminalRecord,
+
 } from '@/lib/screening';
 import { logAudit, getAudits } from '@/lib/audit';
 import { defaultScreeningConfig, type ScreeningConfig } from '@/lib/screeningConfig';
@@ -66,6 +70,31 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
   const type_of_crimeRaw = criminal_background?.type_of_crime;
   const type_of_crime = typeof type_of_crimeRaw === 'string' ? type_of_crimeRaw : null;
 
+  const recordsRaw = Array.isArray(criminal_background?.records) ? criminal_background.records : [];
+  const records: CriminalRecord[] = [];
+  recordsRaw.forEach((rec: any, idx) => {
+    const severity = rec?.severity;
+    const category = rec?.category;
+    const years_since = toNumber(rec?.years_since);
+
+    const validSeverity = severity === 'felony' || severity === 'misdemeanor';
+    const validCategory = ['violent', 'property', 'drug', 'other'].includes(category);
+    if (!validSeverity) errors.push(`criminal_background.records[${idx}].severity must be 'felony' or 'misdemeanor'`);
+    if (!validCategory) errors.push(`criminal_background.records[${idx}].category must be one of violent, property, drug, other`);
+    if (years_since === undefined || years_since < 0) {
+      errors.push(`criminal_background.records[${idx}].years_since must be a non-negative number`);
+    }
+
+    if (validSeverity && validCategory && years_since !== undefined && years_since >= 0) {
+      records.push({
+        severity,
+        category,
+        years_since,
+        description: typeof rec?.description === 'string' ? rec.description : null,
+      });
+    }
+  });
+
   const employment_status = payload?.employment_status as EmploymentStatus;
   const allowedEmployment: EmploymentStatus[] = ['full-time', 'part-time', 'unemployed'];
   if (!allowedEmployment.includes(employment_status)) {
@@ -81,8 +110,14 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
       monthly_rent: monthly_rent!,
       debt: debt!,
       credit_score: credit_score!,
-      rental_history: { evictions: evictions!, late_payments: late_payments!, eviction_filings },
-      criminal_background: { has_criminal_record, type_of_crime },
+
+      rental_history: { evictions: evictions!, late_payments: late_payments! },
+      criminal_background: {
+        has_criminal_record,
+        type_of_crime,
+        records: records.length ? records : undefined,
+      },
+
       employment_status,
     },
   };
@@ -100,7 +135,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
-    const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
+    const { risk_score, decision, breakdown } = tenantScreeningAlgorithm(validation.data, config.value);
 
     // Audit the evaluation in-memory
     logAudit({
@@ -109,9 +144,10 @@ export async function POST(request: NextRequest) {
       input: validation.data,
       risk_score,
       decision,
+      breakdown,
     });
 
-    return Response.json({ risk_score, decision });
+    return Response.json({ risk_score, decision, breakdown });
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
@@ -136,7 +172,15 @@ type PartialConfig = Partial<{
       dtiException: number;
     }>;
     credit: Partial<{ excellentMin: number; goodMin: number }>;
+
     rental?: Partial<{ evictionLookbackYears: number }>;
+
+    criminal: Partial<{
+      violentFelonyLookbackYears: number;
+      felonyLookbackYears: number;
+      misdemeanorLookbackYears: number;
+    }>;
+
   }>;
   scoring: Partial<{
     dtiHigh: number;
@@ -147,6 +191,7 @@ type PartialConfig = Partial<{
       fail: number;
     }>;
     credit: Partial<{ excellent: number; good: number; poor: number }>;
+
     rental: Partial<{
       evictionPoints: number;
       latePaymentsThreshold: number;
@@ -155,6 +200,7 @@ type PartialConfig = Partial<{
       evictionTimeDecayFloor?: number;
     }>;
     criminal: Partial<{ hasRecordPoints: number }>;
+
     employment: Partial<{ fullTime: number; partTime: number; unemployed: number }>;
   }>;
   decision: Partial<{ approvedMax: number; flaggedMax: number }>;
@@ -184,9 +230,11 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin!;
       if (isFiniteNumber(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin!;
     }
+
     if (cfg.thresholds.rental && isFiniteNumber(cfg.thresholds.rental.evictionLookbackYears)) {
       if (!out.thresholds.rental) out.thresholds.rental = { evictionLookbackYears: 5 };
       out.thresholds.rental.evictionLookbackYears = cfg.thresholds.rental.evictionLookbackYears!;
+
     }
   }
 
@@ -231,7 +279,17 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
     }
     if (cfg.scoring.criminal) {
       const cr = cfg.scoring.criminal;
-      if (isFiniteNumber(cr.hasRecordPoints)) out.scoring.criminal.hasRecordPoints = cr.hasRecordPoints!;
+      if (isFiniteNumber(cr.cleanRecordPoints)) out.scoring.criminal.cleanRecordPoints = cr.cleanRecordPoints!;
+      if (isFiniteNumber(cr.staleRecordPoints)) out.scoring.criminal.staleRecordPoints = cr.staleRecordPoints!;
+      if (isFiniteNumber(cr.recentMisdemeanorPoints)) {
+        out.scoring.criminal.recentMisdemeanorPoints = cr.recentMisdemeanorPoints!;
+      }
+      if (isFiniteNumber(cr.recentFelonyPoints)) {
+        out.scoring.criminal.recentFelonyPoints = cr.recentFelonyPoints!;
+      }
+      if (isFiniteNumber(cr.recentViolentFelonyPoints)) {
+        out.scoring.criminal.recentViolentFelonyPoints = cr.recentViolentFelonyPoints!;
+      }
     }
     if (cfg.scoring.employment) {
       const e = cfg.scoring.employment;
