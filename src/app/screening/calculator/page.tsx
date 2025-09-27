@@ -7,7 +7,7 @@ import { defaultScreeningConfig } from '@/lib/screeningConfig';
 
 import type { AdverseActionNotice } from '@/lib/adverseActionNotice';
 
-import type { TenantScreeningResult } from '@/lib/screening';
+import type { Decision, ComplianceSummary } from '@/lib/screening';
 import type { AuditEntry } from '@/lib/audit';
 
 import type { RiskBreakdown } from '@/lib/screening';
@@ -57,26 +57,16 @@ export default function ScreeningCalculatorPage() {
     employment_status: 'full-time',
   });
   
-  interface ScreeningResult {
-    risk_score: number;
-    decision: string;
-    notice: AdverseActionNotice | null;
-  }
-
-  const [result, setResult] = useState<ScreeningResult | null>(null);
-  const [errors, setErrors] = useState<string[] | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  interface AuditRow extends ScreeningResult {
-    id: string;
-    timestamp: string;
-    input: any;
-  }
-
-  const [audits, setAudits] = useState<AuditRow[] | null>(null);
-
+  type TenantScreeningResult = {
+    risk_score: number; 
+    decision: Decision; 
+    compliance?: ComplianceSummary;
+    notice?: AdverseActionNotice | null;
+    breakdown?: RiskBreakdown[];
+    adverse_actions?: any[];
+  };
 
   const [result, setResult] = useState<TenantScreeningResult | null>(null);
-
   const [errors, setErrors] = useState<string[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [audits, setAudits] = useState<AuditEntry[] | null>(null);
@@ -153,15 +143,7 @@ export default function ScreeningCalculatorPage() {
       if (!res.ok) {
         setErrors(data?.errors ?? [data?.error ?? 'Something went wrong']);
       } else {
-
-        setResult({
-          risk_score: data.risk_score,
-          decision: data.decision,
-          notice: data.notice ?? null,
-        });
-
         setResult(data as TenantScreeningResult);
-
       }
     } catch (err) {
       setErrors(['Network or server error']);
@@ -175,18 +157,6 @@ export default function ScreeningCalculatorPage() {
     try {
       const res = await fetch('/api/screening');
       const data = await res.json();
-
-      const auditsResponse = Array.isArray(data?.audits) ? data.audits : [];
-      setAudits(
-        auditsResponse.map((entry: any) => ({
-          id: entry.id,
-          timestamp: entry.timestamp,
-          input: entry.input,
-          risk_score: entry.risk_score,
-          decision: entry.decision,
-          notice: entry.notice ?? null,
-        })),
-      );
 
       setAudits(Array.isArray(data?.audits) ? (data.audits as AuditEntry[]) : []);
 
@@ -223,7 +193,7 @@ export default function ScreeningCalculatorPage() {
               defaultScreeningConfig.thresholds.rental?.evictionLookbackYears ??
               5,
           ),
-
+        },
         criminal: {
           violentFelonyLookbackYears: String(cfg.thresholds.criminal.violentFelonyLookbackYears),
           felonyLookbackYears: String(cfg.thresholds.criminal.felonyLookbackYears),
@@ -313,7 +283,7 @@ export default function ScreeningCalculatorPage() {
 
         rental: {
           evictionLookbackYears: Number(cf.thresholds.rental.evictionLookbackYears),
-
+        },
         criminal: {
           violentFelonyLookbackYears: Number(cf.thresholds.criminal.violentFelonyLookbackYears),
           felonyLookbackYears: Number(cf.thresholds.criminal.felonyLookbackYears),
@@ -408,7 +378,7 @@ export default function ScreeningCalculatorPage() {
             `${rec.severity}:${rec.category}:${rec.years_since}${rec.description ? ` (${rec.description})` : ''}`,
         )
         .join('; '),
-      a.breakdown?.criminal?.requiresIndividualReview ?? '',
+      a.result?.breakdown?.criminal?.requiresIndividualReview ?? '',
       a.input.employment_status ?? '',
 
       a.risk_score,
@@ -826,7 +796,6 @@ export default function ScreeningCalculatorPage() {
           )}
 
           {result && (
-
             <div
               className={`rounded border p-4 space-y-2 ${
                 decisionTheme[result.decision]?.container ?? 'border-slate-200 bg-slate-50 text-slate-800'
@@ -887,143 +856,6 @@ export default function ScreeningCalculatorPage() {
                 <p>Phone: {result.notice.contact.phone}</p>
                 <p>Mail: {result.notice.contact.address}</p>
               </div>
-
-
-            <div className="space-y-4">
-              <div
-                className={
-                  result.decision === 'Approved'
-                    ? 'rounded border border-green-300 bg-green-50 text-green-800 p-4'
-                    : result.decision === 'Flagged for Review'
-                    ? 'rounded border border-yellow-300 bg-yellow-50 text-yellow-800 p-4'
-                    : 'rounded border border-red-300 bg-red-50 text-red-800 p-4'
-                }
-              >
-                <p className="font-semibold text-lg">Risk Score: {result.risk_score}</p>
-                <p className="font-semibold">Decision: {result.decision}</p>
-              </div>
-
-              <section className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
-                  Factor Breakdown
-                </h3>
-                <div className="space-y-3">
-                  {result.breakdown.map((contribution, idx) => {
-                    const severityStyles: Record<string, string> = {
-                      positive: 'border-l-4 border-green-400 bg-green-50',
-                      neutral: 'border-l-4 border-slate-300 bg-white',
-                      warning: 'border-l-4 border-yellow-400 bg-yellow-50',
-                      critical: 'border-l-4 border-red-400 bg-red-50',
-                    };
-                    const containerClass = severityStyles[contribution.severity] ?? severityStyles.neutral;
-                    return (
-                      <div key={`${contribution.factor}-${idx}`} className={`${containerClass} p-3 rounded-md`}> 
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <p className="font-medium text-slate-900">{contribution.label}</p>
-                            <p className="text-xs text-slate-500">Source: {contribution.dataSource}</p>
-                          </div>
-                          <span className="text-sm font-semibold text-slate-700">
-                            +{contribution.points} pts
-                          </span>
-                        </div>
-                        {contribution.details && (
-                          <dl className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
-                            {Object.entries(contribution.details).map(([key, value]) => (
-                              <div key={key} className="flex items-center gap-1">
-                                <dt className="uppercase tracking-wide text-[10px] text-slate-500">
-                                  {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}:
-                                </dt>
-                                <dd>{String(value)}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        )}
-                        {contribution.recommendedAction && contribution.points > 0 && (
-                          <p className="mt-2 text-xs text-slate-700">
-                            <span className="font-semibold">Suggested action:</span> {contribution.recommendedAction}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {result.adverse_actions.length > 0 && (
-                <section className="border border-red-200 bg-red-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-red-800 uppercase tracking-wide mb-3">
-                    Applicant Adverse-Action Explanations
-                  </h3>
-                  <ul className="space-y-3 text-sm text-red-900">
-                    {result.adverse_actions.map((item, idx) => (
-                      <li key={`${item.factor}-${idx}`} className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">{item.reason}</span>
-                          <span className="text-xs font-semibold">+{item.points} pts</span>
-                        </div>
-                        <p className="text-xs text-red-700">Data source: {item.dataSource}</p>
-                        <p className="text-xs">
-                          Recommended next step: <span className="font-medium">{item.recommendedAction}</span>
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              {(result.decision === 'Flagged for Review' || result.decision === 'Denied') && (
-                <section className="border border-amber-200 bg-amber-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-amber-800 uppercase tracking-wide mb-2">
-                    Manual Review Checklist
-                  </h3>
-                  <p className="text-sm text-amber-900 mb-2">
-                    Focus on the highest-impact factors below when speaking with the applicant or collecting
-                    documentation.
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-amber-900 space-y-1">
-                    {result.breakdown
-                      .filter((item) => item.points > 0)
-                      .map((item, idx) => (
-                        <li key={`${item.factor}-manual-${idx}`}>
-                          <span className="font-semibold">{item.label}:</span>{' '}
-                          {item.recommendedAction ?? 'Request additional documentation or context.'}
-                        </li>
-                      ))}
-                  </ul>
-                  <p className="mt-2 text-xs text-amber-700">
-                    Tip: Document outreach attempts and keep supporting evidence with the applicant file.
-                  </p>
-                </section>
-              )}
-
-              <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
-              <p className="font-medium">Risk Score: {result.risk_score}</p>
-              <p className="font-medium">Decision: {result.decision}</p>
-              {result.breakdown?.criminal && (
-                <div className="mt-2 text-sm text-green-900 space-y-2">
-                  <p>
-                    Criminal history requires individualized review:{' '}
-                    <span className="font-semibold">
-                      {result.breakdown.criminal.requiresIndividualReview ? 'Yes' : 'No'}
-                    </span>
-                  </p>
-                  {result.breakdown.criminal.rationale.length > 0 && (
-                    <ul className="list-disc list-inside space-y-1">
-                      {result.breakdown.criminal.rationale.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  )}
-                  {result.breakdown.criminal.disregardedRecords.length > 0 && (
-                    <p className="text-xs text-green-700">
-                      Older records documented but not scored: {result.breakdown.criminal.disregardedRecords.length}
-                    </p>
-                  )}
-                </div>
-
-              )}
-
             </div>
           )}
 
@@ -1102,11 +934,11 @@ export default function ScreeningCalculatorPage() {
                       <NumberField label="Credit Excellent Min" value={configForm.thresholds.credit.excellentMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, excellentMin: v}}})} />
                       <NumberField label="Credit Good Min" value={configForm.thresholds.credit.goodMin} onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, credit: {...configForm.thresholds.credit, goodMin: v}}})} />
                       <NumberField
-
                         label="Eviction Lookback Years"
                         value={configForm.thresholds.rental.evictionLookbackYears}
                         onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, rental: { evictionLookbackYears: v }}})}
-
+                      />
+                      <NumberField
                         label="Violent Felony Lookback (yrs)"
                         value={configForm.thresholds.criminal.violentFelonyLookbackYears}
                         onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, violentFelonyLookbackYears: v}}})}
@@ -1120,7 +952,6 @@ export default function ScreeningCalculatorPage() {
                         label="Misdemeanor Lookback (yrs)"
                         value={configForm.thresholds.criminal.misdemeanorLookbackYears}
                         onChange={(v)=>setConfigForm({...configForm, thresholds: {...configForm.thresholds, criminal: {...configForm.thresholds.criminal, misdemeanorLookbackYears: v}}})}
-
                       />
                     </div>
                   </section>
@@ -1250,25 +1081,25 @@ export default function ScreeningCalculatorPage() {
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.monthly_rent{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.debt{'}'}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${'{'}a.input.credit_score{'}'}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{a.result.risk_score}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{a.risk_score}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <span
                           className={
-                            a.result.decision === 'Approved'
+                            a.decision === 'Approved'
                               ? 'inline-flex px-2 py-1 rounded-full bg-green-100 text-green-700'
-                              : a.result.decision === 'Flagged for Review'
+                              : a.decision === 'Flagged for Review'
                               ? 'inline-flex px-2 py-1 rounded-full bg-yellow-100 text-yellow-700'
                               : 'inline-flex px-2 py-1 rounded-full bg-red-100 text-red-700'
                           }
                         >
-                          {a.result.decision}
+                          {a.decision}
                         </span>
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {a.breakdown?.criminal?.requiresIndividualReview ? 'Yes' : 'No'}
+                        {a.result?.breakdown?.criminal?.requiresIndividualReview ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-600 max-w-xs">
-                        {a.breakdown?.criminal?.rationale?.[0] ?? ''}
+                        {a.result?.breakdown?.criminal?.rationale?.[0] ?? ''}
                       </td>
                     </tr>
                   ))}
@@ -1280,4 +1111,5 @@ export default function ScreeningCalculatorPage() {
       </div>
     </div>
   );
+}
 }

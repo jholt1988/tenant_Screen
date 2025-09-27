@@ -252,7 +252,14 @@ export default function ApplicationsPage() {
                 <p className="mt-4 text-xs text-gray-500">
                   Dispute submitted {dispute.submittedAt}. Maintain all notes and correspondence in this case record to support FCRA compliance.
                 </p>
--
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {disputeQueue.length > 0 && (
+            <div className="mb-8">
+          <section>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-800">Manual Review Queue</h3>
@@ -317,7 +324,9 @@ export default function ApplicationsPage() {
               </div>
             ))}
           </div>
+          </section>
         </div>
+        )}
       </div>
     </div>
   );
