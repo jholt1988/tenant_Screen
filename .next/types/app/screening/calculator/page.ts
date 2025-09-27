@@ -1,4 +1,4 @@
-// File: C:\Users\plabr\tenant_Screen\src\app\screening\calculator\page.tsx
+// File: /home/runner/work/tenant_Screen/tenant_Screen/src/app/screening/calculator/page.tsx
 import * as entry from '../../../../../src/app/screening/calculator/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
