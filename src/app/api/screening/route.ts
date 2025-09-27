@@ -137,7 +137,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
-
     const jurisdiction = typeof payload?.jurisdiction === 'string' ? payload.jurisdiction : undefined;
     const policy = jurisdiction ? getJurisdictionPolicy(jurisdiction) : undefined;
     if (jurisdiction && !policy) {
@@ -146,42 +145,19 @@ export async function POST(request: NextRequest) {
 
     const result = tenantScreeningAlgorithm(validation.data, config.value, { policy });
     const { risk_score, decision } = result;
-
-   const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
     const notice = generateAdverseActionNotice(decision, validation.data);
-
-
-    const result = tenantScreeningAlgorithm(validation.data, config.value);
-   const { risk_score, decision, breakdown } = tenantScreeningAlgorithm(validation.data, config.value);
-
-
 
     // Audit the evaluation in-memory
     logAudit({
       id: randomUUID(),
       timestamp: new Date().toISOString(),
-
       input: validation.data,
       risk_score,
       decision,
-
       compliance: result.compliance,
     });
 
-    return Response.json({ risk_score, decision, compliance: result.compliance });
-
-      notice,
-    });
-
-    return Response.json({ risk_score, decision, notice });
-
-      input: validation.data
-      result,
-    });
-
-    return Response.json(result);
-
-
+    return Response.json({ risk_score, decision, compliance: result.compliance, notice });
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
@@ -218,7 +194,7 @@ type PartialConfig = Partial<{
       violentFelonyLookbackYears: number;
       felonyLookbackYears: number;
       misdemeanorLookbackYears: number;
-   
+    }>;
   }>;
   scoring: Partial<{
     dtiHigh: number;
@@ -243,7 +219,13 @@ type PartialConfig = Partial<{
       evictionTimeDecayFloor?: number;
 
     }>;
-    criminal: Partial<{ hasRecordPoints: number }>;
+    criminal: Partial<{
+      cleanRecordPoints: number;
+      staleRecordPoints: number;
+      recentMisdemeanorPoints: number;
+      recentFelonyPoints: number;
+      recentViolentFelonyPoints: number;
+    }>;
 
     employment: Partial<{ fullTime: number; partTime: number; unemployed: number }>;
     alternativeData: Partial<{
@@ -290,7 +272,7 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(u.strong)) out.thresholds.alternativeData.utility.strong = u.strong!;
       if (isFiniteNumber(u.moderate)) out.thresholds.alternativeData.utility.moderate = u.moderate!;
       if (isFiniteNumber(u.weak)) out.thresholds.alternativeData.utility.weak = u.weak!;
-
+    }
 
     if (cfg.thresholds.rental && isFiniteNumber(cfg.thresholds.rental.evictionLookbackYears)) {
       if (!out.thresholds.rental) out.thresholds.rental = { evictionLookbackYears: 5 };
