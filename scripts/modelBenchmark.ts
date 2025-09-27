@@ -72,6 +72,14 @@ function buildLegacyConfig(): ScreeningConfig {
           weak: 0.65,
         },
       },
+      rental: {
+        evictionLookbackYears: 5,
+      },
+      criminal: {
+        violentFelonyLookbackYears: 10,
+        felonyLookbackYears: 7,
+        misdemeanorLookbackYears: 3,
+      },
     },
     scoring: {
       dtiHigh: 2,
@@ -85,7 +93,13 @@ function buildLegacyConfig(): ScreeningConfig {
         satisfactoryReferenceOffset: 0,
         concernReferencePoints: 0,
       },
-      criminal: { hasRecordPoints: 3 },
+      criminal: {
+        cleanRecordPoints: 0,
+        staleRecordPoints: 1,
+        recentMisdemeanorPoints: 2,
+        recentFelonyPoints: 3,
+        recentViolentFelonyPoints: 4,
+      },
       employment: { fullTime: 0, partTime: 1, unemployed: 2 },
       alternativeData: {
         utilityStrongOffset: 0,
