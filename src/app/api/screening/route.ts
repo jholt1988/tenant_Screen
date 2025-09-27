@@ -6,6 +6,7 @@ import {
 } from '@/lib/screening';
 import { logAudit, getAudits } from '@/lib/audit';
 import { defaultScreeningConfig, type ScreeningConfig } from '@/lib/screeningConfig';
+import { getJurisdictionPolicy } from '@/lib/jurisdictions';
 import { randomUUID } from 'crypto';
 
 function toNumber(val: unknown): number | undefined {
@@ -71,7 +72,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
-    const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
+    const jurisdiction = typeof payload?.jurisdiction === 'string' ? payload.jurisdiction : undefined;
+    const policy = jurisdiction ? getJurisdictionPolicy(jurisdiction) : undefined;
+    if (jurisdiction && !policy) {
+      return Response.json({ errors: [`Unknown jurisdiction policy: ${jurisdiction}`] }, { status: 400 });
+    }
+
+    const result = tenantScreeningAlgorithm(validation.data, config.value, { policy });
+    const { risk_score, decision } = result;
 
     // Audit the evaluation in-memory
     logAudit({
@@ -80,9 +88,10 @@ export async function POST(request: NextRequest) {
       input: validation.data,
       risk_score,
       decision,
+      compliance: result.compliance,
     });
 
-    return Response.json({ risk_score, decision });
+    return Response.json({ risk_score, decision, compliance: result.compliance });
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
