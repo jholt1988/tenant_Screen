@@ -1,4 +1,5 @@
 import Button from '@/components/Button';
+import { disputeQueue } from '@/lib/disputes';
 
 export default function ApplicationsPage() {
   return (
@@ -122,6 +123,83 @@ export default function ApplicationsPage() {
               <div className="text-2xl font-bold text-red-600">3</div>
               <div className="text-sm text-gray-600">Rejected</div>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Dispute Handling Queue</h3>
+            <p className="text-sm text-gray-600">
+              Track FCRA reinvestigations with documented verification steps and supporting evidence.
+            </p>
+          </div>
+          <div className="space-y-4">
+            {disputeQueue.map((dispute) => (
+              <div key={dispute.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">
+                      {dispute.id} — {dispute.applicant}
+                    </h4>
+                    <p className="text-sm text-gray-600">{dispute.trigger}</p>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p>
+                      <span className="font-medium text-gray-900">Status:</span> {dispute.status}
+                    </p>
+                    <p>
+                      <span className="font-medium text-gray-900">Assigned to:</span> {dispute.assignedTo}
+                    </p>
+                    <p>
+                      <span className="font-medium text-gray-900">Verification due:</span> {dispute.verificationDue}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Verification Steps</h5>
+                    <ul className="mt-2 space-y-2">
+                      {dispute.verificationSteps.map((step, idx) => (
+                        <li key={`${dispute.id}-step-${idx}`} className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-gray-900">{step.label}</span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                step.completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {step.completed ? 'Complete' : 'Pending'}
+                            </span>
+                          </div>
+                          {step.completedAt && (
+                            <p className="mt-1 text-xs text-gray-600">Completed {step.completedAt}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">Reinvestigation Documentation</h5>
+                    {dispute.reinvestigationDocuments.length === 0 ? (
+                      <p className="mt-2 text-sm text-gray-600">No supporting documents uploaded yet.</p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {dispute.reinvestigationDocuments.map((doc, idx) => (
+                          <li key={`${dispute.id}-doc-${idx}`} className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                            <p className="font-medium text-gray-900">{doc.name}</p>
+                            <p className="text-xs text-gray-500">Received {doc.receivedAt}</p>
+                            <p className="mt-1 text-sm text-gray-700">{doc.summary}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <p className="mt-4 text-xs text-gray-500">
+                  Dispute submitted {dispute.submittedAt}. Maintain all notes and correspondence in this case record to support FCRA compliance.
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

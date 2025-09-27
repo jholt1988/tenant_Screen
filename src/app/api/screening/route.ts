@@ -7,6 +7,7 @@ import {
 import { logAudit, getAudits } from '@/lib/audit';
 import { defaultScreeningConfig, type ScreeningConfig } from '@/lib/screeningConfig';
 import { randomUUID } from 'crypto';
+import { generateAdverseActionNotice } from '@/lib/adverseActionNotice';
 
 function toNumber(val: unknown): number | undefined {
   const n = typeof val === 'string' ? Number(val) : (val as number);
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
+    const notice = generateAdverseActionNotice(decision, validation.data);
 
     // Audit the evaluation in-memory
     logAudit({
@@ -80,9 +82,10 @@ export async function POST(request: NextRequest) {
       input: validation.data,
       risk_score,
       decision,
+      notice,
     });
 
-    return Response.json({ risk_score, decision });
+    return Response.json({ risk_score, decision, notice });
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }

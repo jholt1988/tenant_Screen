@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { defaultScreeningConfig } from '@/lib/screeningConfig';
+import type { AdverseActionNotice } from '@/lib/adverseActionNotice';
 
 function NumberField({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
   return (
@@ -41,16 +42,43 @@ export default function ScreeningCalculatorPage() {
     criminal_background: { has_criminal_record: false, type_of_crime: '' },
     employment_status: 'full-time',
   });
-  const [result, setResult] = useState<{ risk_score: number; decision: string } | null>(null);
+  interface ScreeningResult {
+    risk_score: number;
+    decision: string;
+    notice: AdverseActionNotice | null;
+  }
+
+  const [result, setResult] = useState<ScreeningResult | null>(null);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [audits, setAudits] = useState<any[] | null>(null);
+  interface AuditRow extends ScreeningResult {
+    id: string;
+    timestamp: string;
+    input: any;
+  }
+
+  const [audits, setAudits] = useState<AuditRow[] | null>(null);
   const [loadingAudits, setLoadingAudits] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [customEnabled, setCustomEnabled] = useState(false);
   const [configForm, setConfigForm] = useState(() => toConfigForm(defaultScreeningConfig));
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const decisionTheme: Record<string, { container: string; badge: string }> = {
+    Approved: {
+      container: 'border-green-300 bg-green-50 text-green-800',
+      badge: 'bg-green-100 text-green-800',
+    },
+    'Flagged for Review': {
+      container: 'border-yellow-300 bg-yellow-50 text-yellow-800',
+      badge: 'bg-yellow-100 text-yellow-800',
+    },
+    Denied: {
+      container: 'border-red-300 bg-red-50 text-red-800',
+      badge: 'bg-red-100 text-red-800',
+    },
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,7 +116,11 @@ export default function ScreeningCalculatorPage() {
       if (!res.ok) {
         setErrors(data?.errors ?? [data?.error ?? 'Something went wrong']);
       } else {
-        setResult(data);
+        setResult({
+          risk_score: data.risk_score,
+          decision: data.decision,
+          notice: data.notice ?? null,
+        });
       }
     } catch (err) {
       setErrors(['Network or server error']);
@@ -102,7 +134,17 @@ export default function ScreeningCalculatorPage() {
     try {
       const res = await fetch('/api/screening');
       const data = await res.json();
-      setAudits(Array.isArray(data?.audits) ? data.audits : []);
+      const auditsResponse = Array.isArray(data?.audits) ? data.audits : [];
+      setAudits(
+        auditsResponse.map((entry: any) => ({
+          id: entry.id,
+          timestamp: entry.timestamp,
+          input: entry.input,
+          risk_score: entry.risk_score,
+          decision: entry.decision,
+          notice: entry.notice ?? null,
+        })),
+      );
     } catch {
       setAudits([]);
     } finally {
@@ -212,7 +254,20 @@ export default function ScreeningCalculatorPage() {
   function exportCsv() {
     if (!audits || audits.length === 0) return;
     const headers = [
-      'timestamp','income','monthly_rent','debt','credit_score','evictions','late_payments','has_criminal_record','type_of_crime','employment_status','risk_score','decision'
+      'timestamp',
+      'income',
+      'monthly_rent',
+      'debt',
+      'credit_score',
+      'evictions',
+      'late_payments',
+      'has_criminal_record',
+      'type_of_crime',
+      'employment_status',
+      'risk_score',
+      'decision',
+      'notice_type',
+      'notice_waiting_period_days',
     ];
     const rows = audits.map((a) => [
       a.timestamp,
@@ -227,6 +282,8 @@ export default function ScreeningCalculatorPage() {
       a.input.employment_status ?? '',
       a.risk_score,
       a.decision,
+      a.notice?.type ?? '',
+      a.notice?.waitingPeriodDays ?? '',
     ]);
     const csv = [
       headers.join(','),
@@ -478,9 +535,66 @@ export default function ScreeningCalculatorPage() {
           )}
 
           {result && (
-            <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
+            <div
+              className={`rounded border p-4 space-y-2 ${
+                decisionTheme[result.decision]?.container ?? 'border-slate-200 bg-slate-50 text-slate-800'
+              }`}
+            >
               <p className="font-medium">Risk Score: {result.risk_score}</p>
-              <p className="font-medium">Decision: {result.decision}</p>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span>Decision:</span>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                    decisionTheme[result.decision]?.badge ?? 'bg-slate-200 text-slate-900'
+                  }`}
+                >
+                  {result.decision}
+                </span>
+              </div>
+              {result.notice?.waitingPeriodDays ? (
+                <p className="text-sm">
+                  A minimum {result.notice.waitingPeriodDays}-day waiting period is in effect before any final adverse action is
+                  taken.
+                </p>
+              ) : null}
+            </div>
+          )}
+
+          {result?.notice && (
+            <div className="rounded border border-blue-200 bg-blue-50 p-5 text-blue-900 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">{result.notice.headline}</h3>
+                <p className="mt-1 text-sm text-blue-800">{result.notice.summary}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-blue-800">Data Sources Referenced</h4>
+                <ul className="mt-2 space-y-3">
+                  {result.notice.dataSources.map((source) => (
+                    <li key={source.name} className="rounded border border-blue-100 bg-white/70 p-3">
+                      <p className="font-medium text-blue-900">{source.name}</p>
+                      <p className="text-sm text-blue-800">{source.description}</p>
+                      <p className="mt-1 text-xs text-blue-700 italic">Dispute guidance: {source.disputeRoute}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-blue-800">Your Dispute Rights</h4>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-blue-800">
+                  {result.notice.disputeRights.map((item) => (
+                    <li key={item.title}>
+                      <span className="font-medium text-blue-900">{item.title}: </span>
+                      {item.detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="text-sm text-blue-800">
+                <p className="font-medium text-blue-900">Compliance Contact</p>
+                <p>Email: {result.notice.contact.email}</p>
+                <p>Phone: {result.notice.contact.phone}</p>
+                <p>Mail: {result.notice.contact.address}</p>
+              </div>
             </div>
           )}
 

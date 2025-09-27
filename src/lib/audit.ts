@@ -1,4 +1,5 @@
 import type { TenantData, Decision } from './screening';
+import type { AdverseActionNotice } from './adverseActionNotice';
 
 export interface AuditEntry {
   id: string;
@@ -6,6 +7,7 @@ export interface AuditEntry {
   input: TenantData;
   risk_score: number;
   decision: Decision;
+  notice?: AdverseActionNotice | null;
 }
 
 const MAX = 50;
