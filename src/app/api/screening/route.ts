@@ -155,6 +155,13 @@ export async function POST(request: NextRequest) {
       risk_score,
       decision,
       compliance: result.compliance,
+      result: {
+        risk_score,
+        decision,
+        compliance: result.compliance,
+        breakdown: [],
+        adverse_actions: [],
+      },
     });
 
     return Response.json({ risk_score, decision, compliance: result.compliance, notice });
