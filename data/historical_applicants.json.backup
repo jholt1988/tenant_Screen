@@ -2,7 +2,6 @@
   {
     "id": "A1",
     "income": 78000,
-    "monthly_rent": 2550,
     "debt": 21000,
     "credit_score": 772,
     "rental_history": {
@@ -32,7 +31,6 @@
   {
     "id": "A2",
     "income": 82000,
-    "monthly_rent": 2650,
     "debt": 24000,
     "credit_score": 758,
     "rental_history": {
@@ -62,7 +60,6 @@
   {
     "id": "A3",
     "income": 69000,
-    "monthly_rent": 2250,
     "debt": 26000,
     "credit_score": 745,
     "rental_history": {
@@ -92,7 +89,6 @@
   {
     "id": "A4",
     "income": 72000,
-    "monthly_rent": 2350,
     "debt": 25000,
     "credit_score": 768,
     "rental_history": {
@@ -122,7 +118,6 @@
   {
     "id": "A5",
     "income": 76000,
-    "monthly_rent": 2450,
     "debt": 28000,
     "credit_score": 732,
     "rental_history": {
@@ -152,7 +147,6 @@
   {
     "id": "A6",
     "income": 81000,
-    "monthly_rent": 2650,
     "debt": 22000,
     "credit_score": 755,
     "rental_history": {
@@ -182,7 +176,6 @@
   {
     "id": "A7",
     "income": 70000,
-    "monthly_rent": 2250,
     "debt": 30000,
     "credit_score": 738,
     "rental_history": {
@@ -212,7 +205,6 @@
   {
     "id": "A8",
     "income": 83000,
-    "monthly_rent": 2700,
     "debt": 21000,
     "credit_score": 781,
     "rental_history": {
@@ -242,7 +234,6 @@
   {
     "id": "B1",
     "income": 61000,
-    "monthly_rent": 1600,
     "debt": 27000,
     "credit_score": 642,
     "rental_history": {
@@ -272,7 +263,6 @@
   {
     "id": "B2",
     "income": 58000,
-    "monthly_rent": 1500,
     "debt": 25000,
     "credit_score": 618,
     "rental_history": {
@@ -302,7 +292,6 @@
   {
     "id": "B3",
     "income": 54000,
-    "monthly_rent": 1400,
     "debt": 26000,
     "credit_score": 605,
     "rental_history": {
@@ -332,7 +321,6 @@
   {
     "id": "B4",
     "income": 59000,
-    "monthly_rent": 1500,
     "debt": 30000,
     "credit_score": 612,
     "rental_history": {
@@ -362,7 +350,6 @@
   {
     "id": "B5",
     "income": 62000,
-    "monthly_rent": 1600,
     "debt": 31000,
     "credit_score": 655,
     "rental_history": {
@@ -392,7 +379,6 @@
   {
     "id": "B6",
     "income": 60000,
-    "monthly_rent": 1550,
     "debt": 28000,
     "credit_score": 628,
     "rental_history": {
@@ -422,7 +408,6 @@
   {
     "id": "B7",
     "income": 56000,
-    "monthly_rent": 1450,
     "debt": 25000,
     "credit_score": 598,
     "rental_history": {
@@ -452,7 +437,6 @@
   {
     "id": "B8",
     "income": 63000,
-    "monthly_rent": 1650,
     "debt": 24000,
     "credit_score": 662,
     "rental_history": {
@@ -482,7 +466,6 @@
   {
     "id": "C1",
     "income": 64000,
-    "monthly_rent": 1750,
     "debt": 23000,
     "credit_score": 648,
     "rental_history": {
@@ -512,7 +495,6 @@
   {
     "id": "C2",
     "income": 61000,
-    "monthly_rent": 1650,
     "debt": 22000,
     "credit_score": 634,
     "rental_history": {
@@ -542,7 +524,6 @@
   {
     "id": "C3",
     "income": 58000,
-    "monthly_rent": 1600,
     "debt": 21000,
     "credit_score": 622,
     "rental_history": {
@@ -572,7 +553,6 @@
   {
     "id": "C4",
     "income": 56000,
-    "monthly_rent": 1550,
     "debt": 20000,
     "credit_score": 608,
     "rental_history": {
@@ -602,7 +582,6 @@
   {
     "id": "C5",
     "income": 60000,
-    "monthly_rent": 1650,
     "debt": 24000,
     "credit_score": 655,
     "rental_history": {
@@ -632,7 +611,6 @@
   {
     "id": "C6",
     "income": 62000,
-    "monthly_rent": 1700,
     "debt": 26000,
     "credit_score": 640,
     "rental_history": {
@@ -662,7 +640,6 @@
   {
     "id": "C7",
     "income": 57000,
-    "monthly_rent": 1550,
     "debt": 25000,
     "credit_score": 618,
     "rental_history": {
@@ -692,7 +669,6 @@
   {
     "id": "C8",
     "income": 65000,
-    "monthly_rent": 1800,
     "debt": 27000,
     "credit_score": 646,
     "rental_history": {
