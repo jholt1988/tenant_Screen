@@ -12,6 +12,19 @@ export interface CriminalBackground {
   type_of_crime?: string | null;
 }
 
+export type LandlordReferenceRating = 'strong' | 'positive' | 'neutral' | 'concern';
+
+export interface LandlordReference {
+  rating: LandlordReferenceRating;
+  verified: boolean;
+  references_provided?: number;
+}
+
+export interface PaymentHistory {
+  on_time_rate: number; // percentage of on-time housing payments (0-1)
+  records_available: boolean;
+}
+
 export interface TenantData {
   income: number; // annual income in dollars
   monthly_rent: number; // monthly rent obligation in dollars
@@ -20,6 +33,8 @@ export interface TenantData {
   rental_history: RentalHistory;
   criminal_background: CriminalBackground;
   employment_status: EmploymentStatus;
+  landlord_reference: LandlordReference;
+  payment_history: PaymentHistory;
 }
 
 export type AffordabilityTier = 'meets-rule' | 'partial-credit' | 'dti-exception' | 'fail';
@@ -112,6 +127,56 @@ export function evaluateEmploymentStatus(status: EmploymentStatus, config?: Scre
   return 2; // High risk (unemployed)
 }
 
+export function evaluateLandlordReference(
+  reference: LandlordReference | undefined,
+  config?: ScreeningConfig,
+): number {
+  if (!reference) {
+    if (config) return config.scoring.qualitative.landlord.missing;
+    return 2; // default penalty for missing references
+  }
+
+  if (config) {
+    const { landlord } = config.scoring.qualitative;
+    let score = landlord[reference.rating];
+    if (!reference.verified) score += landlord.unverifiedPenalty;
+    return score;
+  }
+
+  let risk = 0;
+  if (reference.rating === 'strong') risk = 0;
+  else if (reference.rating === 'positive') risk = 1;
+  else if (reference.rating === 'neutral') risk = 2;
+  else risk = 4;
+  if (!reference.verified) risk += 1;
+  return risk;
+}
+
+export function evaluatePaymentHistory(
+  paymentHistory: PaymentHistory | undefined,
+  config?: ScreeningConfig,
+): number {
+  if (!paymentHistory || !paymentHistory.records_available) {
+    if (config) return config.scoring.qualitative.paymentHistory.missing;
+    return 2; // default penalty when no records are available
+  }
+
+  const onTimeRate = paymentHistory.on_time_rate;
+
+  if (config) {
+    const { paymentHistory: paymentConfig } = config.scoring.qualitative;
+    if (onTimeRate >= paymentConfig.excellentMin) return paymentConfig.excellent;
+    if (onTimeRate >= paymentConfig.goodMin) return paymentConfig.good;
+    if (onTimeRate >= paymentConfig.fairMin) return paymentConfig.fair;
+    return paymentConfig.poor;
+  }
+
+  if (onTimeRate >= 0.95) return 0;
+  if (onTimeRate >= 0.85) return 1;
+  if (onTimeRate >= 0.7) return 2;
+  return 3;
+}
+
 export function calculateRiskScore(tenant: TenantData, config: ScreeningConfig = defaultScreeningConfig): number {
   let risk_score = 0;
 
@@ -124,6 +189,8 @@ export function calculateRiskScore(tenant: TenantData, config: ScreeningConfig =
   risk_score += evaluateRentalHistory(tenant.rental_history, config);
   risk_score += evaluateCriminalRecord(tenant.criminal_background, config);
   risk_score += evaluateEmploymentStatus(tenant.employment_status, config);
+  risk_score += evaluateLandlordReference(tenant.landlord_reference, config);
+  risk_score += evaluatePaymentHistory(tenant.payment_history, config);
 
   return risk_score;
 }

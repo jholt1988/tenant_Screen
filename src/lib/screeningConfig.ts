@@ -28,6 +28,26 @@ export interface ScreeningConfig {
     };
     criminal: { hasRecordPoints: number };
     employment: { fullTime: number; partTime: number; unemployed: number };
+    qualitative: {
+      landlord: {
+        strong: number;
+        positive: number;
+        neutral: number;
+        concern: number;
+        unverifiedPenalty: number;
+        missing: number;
+      };
+      paymentHistory: {
+        excellentMin: number;
+        goodMin: number;
+        fairMin: number;
+        excellent: number;
+        good: number;
+        fair: number;
+        poor: number;
+        missing: number;
+      };
+    };
   };
   decision: {
     approvedMax: number; // <= approvedMax => Approved
@@ -53,10 +73,30 @@ export const defaultScreeningConfig: ScreeningConfig = {
     rental: { evictionPoints: 3, latePaymentsThreshold: 3, latePaymentsPoints: 2 },
     criminal: { hasRecordPoints: 3 },
     employment: { fullTime: 0, partTime: 1, unemployed: 2 },
+    qualitative: {
+      landlord: {
+        strong: 0,
+        positive: 0.5,
+        neutral: 1,
+        concern: 3,
+        unverifiedPenalty: 0.5,
+        missing: 1.5,
+      },
+      paymentHistory: {
+        excellentMin: 0.95,
+        goodMin: 0.85,
+        fairMin: 0.7,
+        excellent: 0,
+        good: 0.5,
+        fair: 1.5,
+        poor: 3,
+        missing: 1.5,
+      },
+    },
   },
   decision: {
-    approvedMax: 3,
-    flaggedMax: 6,
+    approvedMax: 5.5,
+    flaggedMax: 5.75,
   },
 };
 

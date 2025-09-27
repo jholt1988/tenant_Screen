@@ -68,7 +68,7 @@ function runPolicy(applicants: ApplicantSample[], config: ScreeningConfig, label
 
   const groups: Record<string, GroupSummary> = {};
   const approvals: number[] = [];
-  for (const [key, counts] of groupMap.entries()) {
+  for (const [key, counts] of Array.from(groupMap.entries())) {
     const summary = toSummary(counts);
     groups[key] = summary;
     approvals.push(summary.approvalRate);

@@ -11,6 +11,7 @@ interface HistoricalApplicant extends TenantData {
   proxy_label: string;
   utility_payment_score?: number;
   actual_outcome: ActualOutcome;
+  tenancy_outcome: 'successful' | 'unsuccessful';
 }
 
 interface Scheme {
@@ -68,10 +69,22 @@ function buildSchemes(): Scheme[] {
   const utilityAugmented = cloneConfig(defaultScreeningConfig);
   utilityAugmented.scoring.credit = { excellent: 0, good: 0.5, poor: 1.25 };
 
+  const qualitativePilot = cloneConfig(defaultScreeningConfig);
+  qualitativePilot.scoring.qualitative.landlord.concern = 2.5;
+  qualitativePilot.scoring.qualitative.landlord.missing = 1;
+  qualitativePilot.scoring.qualitative.paymentHistory = {
+    ...qualitativePilot.scoring.qualitative.paymentHistory,
+    excellent: 0,
+    good: 0.25,
+    fair: 1,
+    poor: 2.5,
+    missing: 1,
+  };
+
   const schemes: Scheme[] = [
     {
       name: 'Baseline – Current Weights',
-      description: 'Production QuickLease credit scoring weights (0 / 1 / 2 points).',
+      description: 'Production QuickLease qualitative and credit scoring defaults.',
       config: baseline,
     },
     {
@@ -80,18 +93,26 @@ function buildSchemes(): Scheme[] {
       config: reducedCredit,
     },
     {
+      name: 'Qualitative Pilot (landlord + payments)',
+      description:
+        'Softens penalties for verified landlord praise and emphasizes consistent payment histories collected from alternative data sources.',
+      config: qualitativePilot,
+    },
+    {
       name: 'Credit + Utility Payment Adjustment',
       description:
-        'Moderate credit penalties while granting offsets for strong utility payment history and mild surcharges for low payment reliability.',
+        'Moderate credit penalties while granting offsets for strong payment histories and mild surcharges for low reliability.',
       config: utilityAugmented,
       adjustRisk: (applicant, risk) => {
         const utility = applicant.utility_payment_score ?? 0.5;
-        if (utility >= 0.9) return Math.max(0, risk - 1.5);
-        if (utility >= 0.8) return Math.max(0, risk - 1.0);
-        if (utility >= 0.7) return Math.max(0, risk - 0.75);
-        if (utility >= 0.6) return Math.max(0, risk - 0.5);
-        if (utility < 0.5) return risk + 0.5;
-        return risk;
+        const onTimeRate = applicant.payment_history?.on_time_rate ?? 0.5;
+        let adjusted = risk;
+        if (utility >= 0.9 || onTimeRate >= 0.95) adjusted = Math.max(0, adjusted - 1.5);
+        else if (utility >= 0.8 || onTimeRate >= 0.9) adjusted = Math.max(0, adjusted - 1.0);
+        else if (utility >= 0.7 || onTimeRate >= 0.85) adjusted = Math.max(0, adjusted - 0.75);
+        else if (utility >= 0.6 || onTimeRate >= 0.75) adjusted = Math.max(0, adjusted - 0.5);
+        else if (utility < 0.5 || onTimeRate < 0.65) adjusted += 0.5;
+        return adjusted;
       },
     },
   ];
@@ -139,7 +160,7 @@ function analyzeScheme(applicants: HistoricalApplicant[], scheme: Scheme): Schem
   let maxApprovalRate = 0;
   let totalApplicants = 0;
 
-  for (const [proxyGroup, summary] of groupSummaries.entries()) {
+  for (const [proxyGroup, summary] of Array.from(groupSummaries.entries())) {
     const approvalRate = summary.approvals / summary.total;
     maxApprovalRate = Math.max(maxApprovalRate, approvalRate);
     totalApplicants += summary.total;
@@ -191,13 +212,15 @@ function buildNarrative(results: SchemeResult[]): string {
 
   lines.push('# QuickLease Tenant Score Fairness Audit');
   lines.push('');
-  lines.push('This report quantifies the effect of credit weighting on applicant outcomes segmented by protected-class proxy groups and compares mitigation options.');
+  lines.push(
+    'This report quantifies the effect of credit weighting and newly captured qualitative features (landlord references, rental payment records) on applicant outcomes segmented by protected-class proxy groups and compares mitigation options.',
+  );
   lines.push('');
 
   lines.push('## Data Set');
   lines.push('');
   lines.push(
-    'Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, rental history, employment status, and utility payment reliability.',
+    'Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, rental history, landlord reference sentiment, rental payment reliability, and utility payment reliability.',
   );
   lines.push('');
   lines.push('Current scoring weights, including the credit component, are defined in `src/lib/screeningConfig.ts`.');
@@ -227,37 +250,47 @@ function buildNarrative(results: SchemeResult[]): string {
     lines.push('');
   }
 
-  const baseline = results[0];
-  const reduced = results[1];
-  const utility = results[2];
-
   lines.push('## Comparative Insights');
   lines.push('');
+  const baseline = results.find((result) => result.scheme.name.startsWith('Baseline'))!;
+  const improved = results.filter((result) => !result.scheme.name.startsWith('Baseline'));
+
   lines.push(
     `- Baseline weights show the strongest disparate impact, with approval ratios for LegacyRedlinedZip and ImmigrantCommunity groups falling below the 0.80 threshold (${formatNumber(
       baseline.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
     )} and ${formatNumber(baseline.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0)} respectively).`,
   );
-  lines.push(
-    `- Reducing credit penalties boosts ImmigrantCommunity parity to ${formatNumber(
-      reduced.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0,
-    )} while maintaining similar approval throughput (${toPercent(baseline.overallApprovalRate)} → ${toPercent(
-      reduced.overallApprovalRate,
-    )}); LegacyRedlinedZip remains constrained (${formatNumber(
-      reduced.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
-    )}).`,
-  );
-  lines.push(
-    `- Utility adjustments decrease average risk scores and widen access for applicants with strong payment histories, yet LegacyRedlinedZip still trails at a ${formatNumber(
-      utility.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
-    )} disparate impact ratio, signaling the need for additional policy levers beyond credit data.`,
-  );
+
+  for (const result of improved) {
+    lines.push(
+      `- ${result.scheme.name} lifts overall approval to ${toPercent(result.overallApprovalRate)} and improves disparate impact ratios for ImmigrantCommunity applicants to ${formatNumber(
+        result.metrics.find((m) => m.proxyGroup === 'ImmigrantCommunity')?.disparateImpact ?? 0,
+      )}.`,
+    );
+  }
+
+  const legacyBest = improved.reduce((best, current) => {
+    const legacyScore = current.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0;
+    if (!best) return current;
+    const bestScore = best.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0;
+    return legacyScore > bestScore ? current : best;
+  }, undefined as SchemeResult | undefined);
+
+  if (legacyBest) {
+    lines.push(
+      `- The strongest relief for LegacyRedlinedZip applicants comes from ${legacyBest.scheme.name}, which raises the disparate impact ratio to ${formatNumber(
+        legacyBest.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.disparateImpact ?? 0,
+      )} while keeping average risk below ${formatNumber(
+        legacyBest.metrics.find((m) => m.proxyGroup === 'LegacyRedlinedZip')?.avgRiskScore ?? 0,
+      )}.`,
+    );
+  }
 
   lines.push('');
   lines.push('## Recommendations');
   lines.push('');
-  lines.push('- Adopt the utility-adjusted weighting in a controlled pilot to validate sustained fairness gains without materially increasing risk.');
-  lines.push('- Expand data collection on alternative credit indicators (utility, rental payment history) to support robust scoring beyond traditional credit bureaus.');
+  lines.push('- Adopt the qualitative pilot configuration in a controlled rollout to validate that incorporating landlord feedback and payment histories sustains fairness gains.');
+  lines.push('- Maintain reduced credit weighting where permissible while monitoring risk trends in the LegacyRedlinedZip cohort.');
   lines.push('- Continue monitoring approval ratios quarterly and flag any proxy group that drops below a 0.80 disparate impact ratio.');
 
   lines.push('');

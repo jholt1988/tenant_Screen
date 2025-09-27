@@ -18,6 +18,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 1 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'strong', verified: true },
+    payment_history: { on_time_rate: 0.96, records_available: true },
   },
   {
     id: 'A2',
@@ -30,6 +32,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 0 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'strong', verified: true },
+    payment_history: { on_time_rate: 0.94, records_available: true },
   },
   {
     id: 'A3',
@@ -42,6 +46,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 0 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'part-time',
+    landlord_reference: { rating: 'positive', verified: true },
+    payment_history: { on_time_rate: 0.89, records_available: true },
   },
   {
     id: 'A4',
@@ -54,6 +60,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 3 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'neutral', verified: true },
+    payment_history: { on_time_rate: 0.82, records_available: true },
   },
   {
     id: 'B1',
@@ -66,6 +74,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 1 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'positive', verified: true },
+    payment_history: { on_time_rate: 0.9, records_available: true },
   },
   {
     id: 'B2',
@@ -78,6 +88,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 2 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'positive', verified: true },
+    payment_history: { on_time_rate: 0.86, records_available: true },
   },
   {
     id: 'B3',
@@ -90,6 +102,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 0 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'strong', verified: false },
+    payment_history: { on_time_rate: 0.88, records_available: true },
   },
   {
     id: 'B4',
@@ -102,6 +116,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 1 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'positive', verified: true },
+    payment_history: { on_time_rate: 0.87, records_available: true },
   },
   {
     id: 'C1',
@@ -114,6 +130,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 0 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'strong', verified: true },
+    payment_history: { on_time_rate: 0.97, records_available: true },
   },
   {
     id: 'C2',
@@ -126,6 +144,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 1 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'strong', verified: true },
+    payment_history: { on_time_rate: 0.93, records_available: true },
   },
   {
     id: 'C3',
@@ -138,6 +158,8 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 0 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'positive', verified: true },
+    payment_history: { on_time_rate: 0.9, records_available: true },
   },
   {
     id: 'C4',
@@ -150,5 +172,7 @@ export const applicantSamples: ApplicantSample[] = [
     rental_history: { evictions: 0, late_payments: 2 },
     criminal_background: { has_criminal_record: false },
     employment_status: 'full-time',
+    landlord_reference: { rating: 'neutral', verified: true },
+    payment_history: { on_time_rate: 0.85, records_available: true },
   },
 ];

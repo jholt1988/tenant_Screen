@@ -25,7 +25,7 @@ logPolicy(results.tiered.label, results.tiered);
 const neighborhoods = new Set([...Object.keys(results.strict.groups), ...Object.keys(results.tiered.groups)]);
 
 console.log('\nImpact by neighborhood when moving from strict rule to tiered scoring:');
-for (const neighborhood of neighborhoods) {
+for (const neighborhood of Array.from(neighborhoods)) {
   const strictGroup = results.strict.groups[neighborhood];
   const tieredGroup = results.tiered.groups[neighborhood];
   if (strictGroup && tieredGroup) {
