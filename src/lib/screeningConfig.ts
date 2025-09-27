@@ -17,17 +17,14 @@ export interface ScreeningConfig {
         moderate: number;
         weak: number;
       };
-
-
+    };
     rental?: {
       evictionLookbackYears: number; // horizon for applying time decay to filings
-
+    };
     criminal: {
       violentFelonyLookbackYears: number;
       felonyLookbackYears: number;
       misdemeanorLookbackYears: number;
-
-
     };
   };
   scoring: {
@@ -91,44 +88,19 @@ export const defaultScreeningConfig: ScreeningConfig = {
         weak: 0.65,
       },
     },
-  },
-  scoring: {
-    dtiHigh: 1.5,
-    affordability: { meetsRule: 0, partialCredit: 0.75, dtiException: 1.75, fail: 3.5 },
-    credit: { excellent: 0, good: 0.75, poor: 1.75 },
-    rental: {
-      evictionPoints: 3,
-      latePaymentsThreshold: 3,
-      latePaymentsPoints: 1.5,
-      excellentReferenceOffset: -1.25,
-      satisfactoryReferenceOffset: -0.5,
-      concernReferencePoints: 1.25,
-    },
-    criminal: { hasRecordPoints: 3 },
-    employment: { fullTime: 0, partTime: 0.75, unemployed: 1.75 },
-    alternativeData: {
-      utilityStrongOffset: -1.25,
-      utilityModerateOffset: -0.75,
-      utilityWeakPoints: 0.75,
-    },
-
-    credit: { excellentMin: 750, goodMin: 650 },
-
     rental: {
       evictionLookbackYears: 5,
-
+    },
     criminal: {
       violentFelonyLookbackYears: 10,
       felonyLookbackYears: 7,
       misdemeanorLookbackYears: 3,
-
     },
   },
   scoring: {
     dtiHigh: 2,
     affordability: { meetsRule: 0, partialCredit: 1, dtiException: 2, fail: 4 },
     credit: { excellent: 0, good: 1, poor: 2 },
-
     rental: {
       evictionPoints: 3,
       evictionOutcomePoints: {
@@ -140,16 +112,26 @@ export const defaultScreeningConfig: ScreeningConfig = {
       evictionTimeDecayFloor: 0.25,
       latePaymentsThreshold: 3,
       latePaymentsPoints: 2,
+      excellentReferenceOffset: -1.25,
+      satisfactoryReferenceOffset: -0.5,
+      concernReferencePoints: 1.25,
     },
-    criminal: { hasRecordPoints: 3 },
-
-
+    criminal: {
+      cleanRecordPoints: 0,
+      staleRecordPoints: 0.5,
+      recentMisdemeanorPoints: 1.5,
+      recentFelonyPoints: 3,
+      recentViolentFelonyPoints: 4,
+    },
     employment: { fullTime: 0, partTime: 1, unemployed: 2 },
-
+    alternativeData: {
+      utilityStrongOffset: -1.25,
+      utilityModerateOffset: -0.75,
+      utilityWeakPoints: 0.75,
+    },
   },
   decision: {
     approvedMax: 2.75,
     flaggedMax: 5.5,
   },
 };
-

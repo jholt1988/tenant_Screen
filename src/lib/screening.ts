@@ -165,13 +165,6 @@ export function evaluateCreditScore(credit_score: number, config?: ScreeningConf
 }
 
 
-export function evaluateRentalHistory(
-  rental_history: RentalHistory,
-  config?: ScreeningConfig,
-  rental_reference?: RentalReference,
-): number {
-
-
 export type CreditTier = 'excellent' | 'good' | 'poor';
 
 export function determineCreditTier(
@@ -182,6 +175,7 @@ export function determineCreditTier(
   if (credit_score >= excellentMin) return 'excellent';
   if (credit_score >= goodMin) return 'good';
   return 'poor';
+}
 
 function yearsSince(dateStr: string, reference: Date): number | null {
   const parsed = new Date(dateStr);
@@ -281,10 +275,6 @@ export function evaluateAlternativeData(tenant: TenantData, config: ScreeningCon
   return 0;
 }
 
-export function evaluateCriminalRecord(criminal_background: CriminalBackground, config?: ScreeningConfig): number {
-  if (config) return criminal_background.has_criminal_record ? config.scoring.criminal.hasRecordPoints : 0;
-  return criminal_background.has_criminal_record ? 3 : 0;
-4=======
 function normalizeRecords(input?: CriminalRecord[] | null): CriminalRecord[] {
   if (!Array.isArray(input)) return [];
   return input
@@ -634,50 +624,6 @@ export function calculateRiskProfile(
 
 export function calculateRiskScore(tenant: TenantData, config: ScreeningConfig = defaultScreeningConfig): number {
   return calculateRiskProfile(tenant, config).risk_score;
-==
-export function calculateRiskScore(
-  tenant: TenantData,
-  config: ScreeningConfig = defaultScreeningConfig,
-): { total: number; breakdown: RiskBreakdown } {
-  let total = 0;
-
-  const affordability = evaluateAffordability(tenant.income, tenant.debt, tenant.monthly_rent, config);
-  total += affordability.risk;
-
-  const dtiHighApplied = affordability.dti > config.thresholds.dtiHigh;
-  if (dtiHighApplied) total += config.scoring.dtiHigh;
-
-
-  risk_score += evaluateCreditScore(tenant.credit_score, config);
-  risk_score += evaluateRentalHistory(tenant.rental_history, config, tenant.rental_reference);
-  risk_score += evaluateCriminalRecord(tenant.criminal_background, config);
-  risk_score += evaluateEmploymentStatus(tenant.employment_status, config);
-  risk_score += evaluateAlternativeData(tenant, config);
-
-  const creditPoints = evaluateCreditScore(tenant.credit_score, config);
-  total += creditPoints;
-
-  const rentalPoints = evaluateRentalHistory(tenant.rental_history, config);
-  total += rentalPoints;
-
-  const criminal = evaluateCriminalRecord(tenant.criminal_background, config);
-  total += criminal.risk;
-
-  const employmentPoints = evaluateEmploymentStatus(tenant.employment_status, config);
-  total += employmentPoints;
-
-  return {
-    total,
-    breakdown: {
-      affordability,
-      dtiHighApplied,
-      creditPoints,
-      rentalPoints,
-      criminal,
-      employmentPoints,
-    },
-  };
-
 }
 
 export type Decision = 'Approved' | 'Flagged for Review' | 'Denied';
@@ -704,14 +650,6 @@ function resolvePolicy(policy?: JurisdictionPolicy | JurisdictionId | null): Jur
   if (!policy) return undefined;
   if (typeof policy === 'string') return getJurisdictionPolicy(policy);
   return policy;
-
-export interface TenantScreeningResult {
-  risk_score: number;
-  decision: Decision;
-  breakdown: RiskFactorContribution[];
-  adverse_actions: AdverseActionExplanation[];
-  affordability: AffordabilityEvaluation;
-
 }
 
 export function tenantScreeningAlgorithm(
@@ -738,19 +676,4 @@ export function tenantScreeningAlgorithm(
   const risk_score = calculateRiskScore(tenant, configToUse);
   const decision = makeDecision(risk_score, configToUse);
   return compliance ? { risk_score, decision, compliance } : { risk_score, decision };
-
-
-): TenantScreeningResult {
-  const profile = calculateRiskProfile(tenant, config);
-  const decision = makeDecision(profile.risk_score, config);
-  return {
-    risk_score: profile.risk_score,
-    decision,
-    breakdown: profile.contributions,
-    adverse_actions: profile.adverseActions,
-    affordability: profile.affordability,
-  };
-
-): 
-
 }
