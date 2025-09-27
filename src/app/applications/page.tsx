@@ -2,6 +2,59 @@ import Button from '@/components/Button';
 import { disputeQueue } from '@/lib/disputes';
 
 export default function ApplicationsPage() {
+  const manualReviewQueue = [
+    {
+      applicant: 'John Doe',
+      property: '123 Main St, Apt 2B',
+      riskScore: 14,
+      decision: 'Flagged for Review',
+      summary: 'DTI above policy threshold and part-time employment require verification.',
+      factors: [
+        {
+          label: 'Debt-to-income ratio exceeds maximum threshold',
+          points: 6,
+          dataSource: 'Credit bureau debt obligations & stated income',
+          recommendedAction: 'Collect recent pay statements or debt payoff letter to confirm updated balances.',
+        },
+        {
+          label: 'Part-time employment may require extra review',
+          points: 3,
+          dataSource: 'Employment verification & income documentation',
+          recommendedAction: 'Request full schedule, hours worked, or secondary income documentation.',
+        },
+      ],
+      guidance: [
+        'Verify income stability and clarify how overtime or supplemental earnings are documented.',
+        'Consider conditional approval with higher deposit once documentation is received.',
+      ],
+    },
+    {
+      applicant: 'Mike Johnson',
+      property: '789 Pine St, Suite 3C',
+      riskScore: 21,
+      decision: 'Denied',
+      summary: 'Prior eviction and open collections elevate risk beyond policy tolerance.',
+      factors: [
+        {
+          label: 'Prior eviction reported',
+          points: 10,
+          dataSource: 'Rental court records & landlord references',
+          recommendedAction: 'Request dismissal paperwork or references from post-eviction landlords.',
+        },
+        {
+          label: 'Credit history indicates elevated risk',
+          points: 6,
+          dataSource: 'Credit bureau report (FICO/VantageScore)',
+          recommendedAction: 'Share pathways for credit repair or offer co-signer requirements.',
+        },
+      ],
+      guidance: [
+        'Document adverse action notice citing the specific data sources above.',
+        'If applicant disputes data, outline reinvestigation process and timeline.',
+      ],
+    },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
@@ -103,7 +156,7 @@ export default function ApplicationsPage() {
             </table>
           </div>
         </div>
-        
+
         <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Application Statistics</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -127,6 +180,7 @@ export default function ApplicationsPage() {
         </div>
 
         <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Dispute Handling Queue</h3>
             <p className="text-sm text-gray-600">
@@ -198,6 +252,68 @@ export default function ApplicationsPage() {
                 <p className="mt-4 text-xs text-gray-500">
                   Dispute submitted {dispute.submittedAt}. Maintain all notes and correspondence in this case record to support FCRA compliance.
                 </p>
+-
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">Manual Review Queue</h3>
+              <p className="text-sm text-gray-600">
+                Focus on the highest risk factors below and capture any outreach or supporting documentation.
+              </p>
+            </div>
+            <Button size="sm" variant="outline">Download Review Checklist</Button>
+          </div>
+          <div className="space-y-4">
+            {manualReviewQueue.map((item) => (
+              <div key={item.applicant} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">{item.applicant}</h4>
+                    <p className="text-sm text-gray-600">{item.property}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide">Risk Score</p>
+                      <p className="text-xl font-bold text-primary-600">{item.riskScore}</p>
+                    </div>
+                    <span
+                      className={
+                        item.decision === 'Flagged for Review'
+                          ? 'inline-flex px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold'
+                          : 'inline-flex px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold'
+                      }
+                    >
+                      {item.decision}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-gray-700">{item.summary}</p>
+
+                <div className="mt-4 space-y-3">
+                  {item.factors.map((factor) => (
+                    <div key={factor.label} className="border-l-4 border-red-400 bg-red-50 rounded-md p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-gray-900">{factor.label}</p>
+                          <p className="text-xs text-gray-600">Data source: {factor.dataSource}</p>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">+{factor.points} pts</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-700">
+                        Recommended action: <span className="font-semibold">{factor.recommendedAction}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <h5 className="text-sm font-semibold text-gray-800 mb-1">Reviewer Checklist</h5>
+                  <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {item.guidance.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+
               </div>
             ))}
           </div>

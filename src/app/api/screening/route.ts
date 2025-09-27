@@ -3,6 +3,12 @@ import {
   tenantScreeningAlgorithm,
   type TenantData,
   type EmploymentStatus,
+
+  type EvictionFiling,
+  type EvictionOutcome,
+
+  type CriminalRecord,
+
 } from '@/lib/screening';
 import { logAudit, getAudits } from '@/lib/audit';
 import { defaultScreeningConfig, type ScreeningConfig } from '@/lib/screeningConfig';
@@ -31,12 +37,64 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
   const evictions = toNumber(rental_history?.evictions);
   const late_payments = toNumber(rental_history?.late_payments);
   if (evictions === undefined || evictions < 0) errors.push('rental_history.evictions must be a non-negative number');
-  if (late_payments === undefined || late_payments < 0) errors.push('rental_history.late_payments must be a non-negative number');
+  if (late_payments === undefined || late_payments < 0)
+    errors.push('rental_history.late_payments must be a non-negative number');
+
+  const eviction_filings_raw = rental_history?.eviction_filings;
+  let eviction_filings: EvictionFiling[] | undefined;
+  const allowedOutcomes: EvictionOutcome[] = ['filed', 'dismissed', 'settled', 'judgment'];
+  if (eviction_filings_raw !== undefined) {
+    if (!Array.isArray(eviction_filings_raw)) {
+      errors.push('rental_history.eviction_filings must be an array when provided');
+    } else {
+      eviction_filings = [];
+      for (const [idx, record] of eviction_filings_raw.entries()) {
+        const outcomeRaw = record?.outcome;
+        const outcome = typeof outcomeRaw === 'string' ? (outcomeRaw.toLowerCase() as EvictionOutcome) : undefined;
+        const filedAtRaw = record?.filed_at;
+        if (!outcome || !allowedOutcomes.includes(outcome)) {
+          errors.push(`rental_history.eviction_filings[${idx}].outcome must be one of ${allowedOutcomes.join(', ')}`);
+          continue;
+        }
+        if (typeof filedAtRaw !== 'string' || Number.isNaN(new Date(filedAtRaw).getTime())) {
+          errors.push(`rental_history.eviction_filings[${idx}].filed_at must be an ISO date string`);
+          continue;
+        }
+        eviction_filings.push({ outcome, filed_at: filedAtRaw });
+      }
+      if (eviction_filings.length === 0) eviction_filings = undefined;
+    }
+  }
 
   const criminal_background = payload?.criminal_background ?? {};
   const has_criminal_record = Boolean(criminal_background?.has_criminal_record);
   const type_of_crimeRaw = criminal_background?.type_of_crime;
   const type_of_crime = typeof type_of_crimeRaw === 'string' ? type_of_crimeRaw : null;
+
+  const recordsRaw = Array.isArray(criminal_background?.records) ? criminal_background.records : [];
+  const records: CriminalRecord[] = [];
+  recordsRaw.forEach((rec: any, idx) => {
+    const severity = rec?.severity;
+    const category = rec?.category;
+    const years_since = toNumber(rec?.years_since);
+
+    const validSeverity = severity === 'felony' || severity === 'misdemeanor';
+    const validCategory = ['violent', 'property', 'drug', 'other'].includes(category);
+    if (!validSeverity) errors.push(`criminal_background.records[${idx}].severity must be 'felony' or 'misdemeanor'`);
+    if (!validCategory) errors.push(`criminal_background.records[${idx}].category must be one of violent, property, drug, other`);
+    if (years_since === undefined || years_since < 0) {
+      errors.push(`criminal_background.records[${idx}].years_since must be a non-negative number`);
+    }
+
+    if (validSeverity && validCategory && years_since !== undefined && years_since >= 0) {
+      records.push({
+        severity,
+        category,
+        years_since,
+        description: typeof rec?.description === 'string' ? rec.description : null,
+      });
+    }
+  });
 
   const employment_status = payload?.employment_status as EmploymentStatus;
   const allowedEmployment: EmploymentStatus[] = ['full-time', 'part-time', 'unemployed'];
@@ -53,8 +111,14 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
       monthly_rent: monthly_rent!,
       debt: debt!,
       credit_score: credit_score!,
+
       rental_history: { evictions: evictions!, late_payments: late_payments! },
-      criminal_background: { has_criminal_record, type_of_crime },
+      criminal_background: {
+        has_criminal_record,
+        type_of_crime,
+        records: records.length ? records : undefined,
+      },
+
       employment_status,
     },
   };
@@ -72,13 +136,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
-    const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
+   const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
     const notice = generateAdverseActionNotice(decision, validation.data);
+
+
+    const result = tenantScreeningAlgorithm(validation.data, config.value);
+   const { risk_score, decision, breakdown } = tenantScreeningAlgorithm(validation.data, config.value);
+
+
 
     // Audit the evaluation in-memory
     logAudit({
       id: randomUUID(),
       timestamp: new Date().toISOString(),
+
       input: validation.data,
       risk_score,
       decision,
@@ -86,6 +157,14 @@ export async function POST(request: NextRequest) {
     });
 
     return Response.json({ risk_score, decision, notice });
+
+      input: validation.data
+      result,
+    });
+
+    return Response.json(result);
+
+
   } catch (e) {
     return Response.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
@@ -110,6 +189,19 @@ type PartialConfig = Partial<{
       dtiException: number;
     }>;
     credit: Partial<{ excellentMin: number; goodMin: number }>;
+
+    alternativeData: Partial<{
+      utility: Partial<{ strong: number; moderate: number; weak: number }>;
+    }>;
+
+
+    rental?: Partial<{ evictionLookbackYears: number }>;
+
+    criminal: Partial<{
+      violentFelonyLookbackYears: number;
+      felonyLookbackYears: number;
+      misdemeanorLookbackYears: number;
+   
   }>;
   scoring: Partial<{
     dtiHigh: number;
@@ -120,9 +212,28 @@ type PartialConfig = Partial<{
       fail: number;
     }>;
     credit: Partial<{ excellent: number; good: number; poor: number }>;
-    rental: Partial<{ evictionPoints: number; latePaymentsThreshold: number; latePaymentsPoints: number }>;
+
+    rental: Partial<{
+      evictionPoints: number;
+      latePaymentsThreshold: number;
+      latePaymentsPoints: number;
+
+      excellentReferenceOffset: number;
+      satisfactoryReferenceOffset: number;
+      concernReferencePoints: number;
+
+      evictionOutcomePoints?: Partial<{ filing: number; dismissed: number; settled: number; judgment: number }>;
+      evictionTimeDecayFloor?: number;
+
+    }>;
     criminal: Partial<{ hasRecordPoints: number }>;
+
     employment: Partial<{ fullTime: number; partTime: number; unemployed: number }>;
+    alternativeData: Partial<{
+      utilityStrongOffset: number;
+      utilityModerateOffset: number;
+      utilityWeakPoints: number;
+    }>;
   }>;
   decision: Partial<{ approvedMax: number; flaggedMax: number }>;
 }>;
@@ -151,6 +262,25 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(c.excellentMin)) out.thresholds.credit.excellentMin = c.excellentMin!;
       if (isFiniteNumber(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin!;
     }
+
+    if (cfg.thresholds.alternativeData && cfg.thresholds.alternativeData.utility) {
+      if (!out.thresholds.alternativeData) {
+        out.thresholds.alternativeData = JSON.parse(
+          JSON.stringify(defaultScreeningConfig.thresholds.alternativeData ?? { utility: { strong: 0.9, moderate: 0.8, weak: 0.65 } }),
+        );
+      }
+      const u = cfg.thresholds.alternativeData.utility;
+      if (isFiniteNumber(u.strong)) out.thresholds.alternativeData.utility.strong = u.strong!;
+      if (isFiniteNumber(u.moderate)) out.thresholds.alternativeData.utility.moderate = u.moderate!;
+      if (isFiniteNumber(u.weak)) out.thresholds.alternativeData.utility.weak = u.weak!;
+
+
+    if (cfg.thresholds.rental && isFiniteNumber(cfg.thresholds.rental.evictionLookbackYears)) {
+      if (!out.thresholds.rental) out.thresholds.rental = { evictionLookbackYears: 5 };
+      out.thresholds.rental.evictionLookbackYears = cfg.thresholds.rental.evictionLookbackYears!;
+
+
+    }
   }
 
   // scoring
@@ -174,16 +304,72 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
       if (isFiniteNumber(r.evictionPoints)) out.scoring.rental.evictionPoints = r.evictionPoints!;
       if (isFiniteNumber(r.latePaymentsThreshold)) out.scoring.rental.latePaymentsThreshold = r.latePaymentsThreshold!;
       if (isFiniteNumber(r.latePaymentsPoints)) out.scoring.rental.latePaymentsPoints = r.latePaymentsPoints!;
+
+      if (isFiniteNumber(r.excellentReferenceOffset)) {
+        out.scoring.rental.excellentReferenceOffset = r.excellentReferenceOffset!;
+      }
+      if (isFiniteNumber(r.satisfactoryReferenceOffset)) {
+        out.scoring.rental.satisfactoryReferenceOffset = r.satisfactoryReferenceOffset!;
+      }
+      if (isFiniteNumber(r.concernReferencePoints)) {
+        out.scoring.rental.concernReferencePoints = r.concernReferencePoints!;
+      }
+
+      if (r.evictionOutcomePoints) {
+        const base =
+          out.scoring.rental.evictionOutcomePoints ?? defaultScreeningConfig.scoring.rental.evictionOutcomePoints ?? {
+            filing: out.scoring.rental.evictionPoints,
+            dismissed: out.scoring.rental.evictionPoints,
+            settled: out.scoring.rental.evictionPoints,
+            judgment: out.scoring.rental.evictionPoints,
+          };
+        const eo = { ...base };
+        const override = r.evictionOutcomePoints;
+        if (isFiniteNumber(override.filing)) eo.filing = override.filing!;
+        if (isFiniteNumber(override.dismissed)) eo.dismissed = override.dismissed!;
+        if (isFiniteNumber(override.settled)) eo.settled = override.settled!;
+        if (isFiniteNumber(override.judgment)) eo.judgment = override.judgment!;
+        out.scoring.rental.evictionOutcomePoints = eo;
+      }
+      if (isFiniteNumber(r.evictionTimeDecayFloor)) out.scoring.rental.evictionTimeDecayFloor = r.evictionTimeDecayFloor!;
+
     }
     if (cfg.scoring.criminal) {
       const cr = cfg.scoring.criminal;
-      if (isFiniteNumber(cr.hasRecordPoints)) out.scoring.criminal.hasRecordPoints = cr.hasRecordPoints!;
+      if (isFiniteNumber(cr.cleanRecordPoints)) out.scoring.criminal.cleanRecordPoints = cr.cleanRecordPoints!;
+      if (isFiniteNumber(cr.staleRecordPoints)) out.scoring.criminal.staleRecordPoints = cr.staleRecordPoints!;
+      if (isFiniteNumber(cr.recentMisdemeanorPoints)) {
+        out.scoring.criminal.recentMisdemeanorPoints = cr.recentMisdemeanorPoints!;
+      }
+      if (isFiniteNumber(cr.recentFelonyPoints)) {
+        out.scoring.criminal.recentFelonyPoints = cr.recentFelonyPoints!;
+      }
+      if (isFiniteNumber(cr.recentViolentFelonyPoints)) {
+        out.scoring.criminal.recentViolentFelonyPoints = cr.recentViolentFelonyPoints!;
+      }
     }
     if (cfg.scoring.employment) {
       const e = cfg.scoring.employment;
       if (isFiniteNumber(e.fullTime)) out.scoring.employment.fullTime = e.fullTime!;
       if (isFiniteNumber(e.partTime)) out.scoring.employment.partTime = e.partTime!;
       if (isFiniteNumber(e.unemployed)) out.scoring.employment.unemployed = e.unemployed!;
+    }
+    if (cfg.scoring.alternativeData) {
+      if (!out.scoring.alternativeData) {
+        out.scoring.alternativeData = JSON.parse(
+          JSON.stringify(
+            defaultScreeningConfig.scoring.alternativeData ?? {
+              utilityStrongOffset: 0,
+              utilityModerateOffset: 0,
+              utilityWeakPoints: 0,
+            },
+          ),
+        );
+      }
+      const alt = cfg.scoring.alternativeData;
+      if (isFiniteNumber(alt.utilityStrongOffset)) out.scoring.alternativeData.utilityStrongOffset = alt.utilityStrongOffset!;
+      if (isFiniteNumber(alt.utilityModerateOffset)) out.scoring.alternativeData.utilityModerateOffset = alt.utilityModerateOffset!;
+      if (isFiniteNumber(alt.utilityWeakPoints)) out.scoring.alternativeData.utilityWeakPoints = alt.utilityWeakPoints!;
     }
   }
 
