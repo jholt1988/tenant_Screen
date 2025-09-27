@@ -93,7 +93,7 @@ export default function ScreeningPage() {
                   ⚠ Minor traffic violation 3 years ago
                 </p>
                 <p className="text-sm text-yellow-700">
-                  ✓ No felony convictions
+                  ✓ Individualized review for any criminal records following HUD guidance
                 </p>
               </div>
               

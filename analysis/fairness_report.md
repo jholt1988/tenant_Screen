@@ -1,16 +1,16 @@
 # QuickLease Tenant Score Fairness Audit
 
-This report quantifies the effect of credit weighting on applicant outcomes segmented by protected-class proxy groups and compares mitigation options.
+This report evaluates revised eviction-history scoring alongside credit mitigation options, segmented by protected-class proxy groups.
 
 ## Data Set
 
-Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, rental history, employment status, and utility payment reliability.
+Historical sample consists of 24 QuickLease applicants with proxy indicators for community type (HighOpportunityZip, LegacyRedlinedZip, ImmigrantCommunity), recorded credit scores, detailed eviction filing outcomes, rental history, employment status, and utility payment reliability.
 
 Current scoring weights, including the credit component, are defined in `src/lib/screeningConfig.ts`.
 
-## Baseline – Current Weights
+## Legacy Eviction Penalty
 
-Production QuickLease credit scoring weights (0 / 1 / 2 points).
+Ignores filing outcomes and only penalizes recorded eviction judgments.
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -24,47 +24,63 @@ Overall approval rate: 58.3%
 - ImmigrantCommunity: approval rate 62.5% (disparate impact ratio 0.71).
 - LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.29).
 
-## Reduced Credit Weighting (50% penalty)
+## Outcome-Sensitive Eviction Scoring (Proposed)
 
-Halves the credit penalties to lessen their contribution to the total risk score.
+Applies partial credit and time decay based on eviction filing outcomes.
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 87.5% | 12.5% | 0.0% | 0.69 | 0.19 | 1.00 |
-| ImmigrantCommunity | 8 | 75.0% | 25.0% | 0.0% | 2.44 | 0.94 | 0.86 |
-| LegacyRedlinedZip | 8 | 25.0% | 37.5% | 37.5% | 6.25 | 0.88 | 0.29 |
+| HighOpportunityZip | 8 | 87.5% | 12.5% | 0.0% | 1.04 | 0.38 | 1.00 |
+| ImmigrantCommunity | 8 | 50.0% | 50.0% | 0.0% | 3.64 | 1.88 | 0.57 |
+| LegacyRedlinedZip | 8 | 12.5% | 25.0% | 62.5% | 6.83 | 1.75 | 0.14 |
+
+Overall approval rate: 50.0%
+
+**Adverse impact alerts (approval rate < 80% of reference group):**
+- ImmigrantCommunity: approval rate 50.0% (disparate impact ratio 0.57).
+- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.14).
+
+## Proposed + Reduced Credit Weighting
+
+Pairs the outcome-sensitive eviction scoring with a 50% reduction in credit penalties.
+
+| Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| HighOpportunityZip | 8 | 87.5% | 12.5% | 0.0% | 0.85 | 0.19 | 1.00 |
+| ImmigrantCommunity | 8 | 50.0% | 50.0% | 0.0% | 2.71 | 0.94 | 0.57 |
+| LegacyRedlinedZip | 8 | 25.0% | 25.0% | 50.0% | 5.96 | 0.88 | 0.29 |
+
+Overall approval rate: 54.2%
+
+**Adverse impact alerts (approval rate < 80% of reference group):**
+- ImmigrantCommunity: approval rate 50.0% (disparate impact ratio 0.57).
+- LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.29).
+
+## Proposed + Utility Payment Adjustment
+
+Retains the outcome-sensitive eviction scoring, moderates credit penalties, and adds offsets for strong utility payment history.
+
+| Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| HighOpportunityZip | 8 | 87.5% | 12.5% | 0.0% | 0.45 | 0.19 | 1.00 |
+| ImmigrantCommunity | 8 | 75.0% | 25.0% | 0.0% | 1.66 | 1.16 | 0.86 |
+| LegacyRedlinedZip | 8 | 25.0% | 25.0% | 50.0% | 5.38 | 1.06 | 0.29 |
 
 Overall approval rate: 62.5%
 
 **Adverse impact alerts (approval rate < 80% of reference group):**
 - LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.29).
 
-## Credit + Utility Payment Adjustment
-
-Moderate credit penalties while granting offsets for strong utility payment history and mild surcharges for low payment reliability.
-
-| Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 100.0% | 0.0% | 0.0% | 0.38 | 0.19 | 1.00 |
-| ImmigrantCommunity | 8 | 75.0% | 25.0% | 0.0% | 1.47 | 1.16 | 0.75 |
-| LegacyRedlinedZip | 8 | 25.0% | 37.5% | 37.5% | 5.69 | 1.06 | 0.25 |
-
-Overall approval rate: 66.7%
-
-**Adverse impact alerts (approval rate < 80% of reference group):**
-- ImmigrantCommunity: approval rate 75.0% (disparate impact ratio 0.75).
-- LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.25).
-
 ## Comparative Insights
 
-- Baseline weights show the strongest disparate impact, with approval ratios for LegacyRedlinedZip and ImmigrantCommunity groups falling below the 0.80 threshold (0.29 and 0.71 respectively).
-- Reducing credit penalties boosts ImmigrantCommunity parity to 0.86 while maintaining similar approval throughput (58.3% → 62.5%); LegacyRedlinedZip remains constrained (0.29).
-- Utility adjustments decrease average risk scores and widen access for applicants with strong payment histories, yet LegacyRedlinedZip still trails at a 0.25 disparate impact ratio, signaling the need for additional policy levers beyond credit data.
+- Applying outcome-sensitive eviction scoring introduces penalties for dismissed or settled filings, lowering LegacyRedlinedZip disparate impact from 0.29 to 0.14; mitigation is required before rollout.
+- Layering reduced credit penalties on the proposed eviction scoring improves ImmigrantCommunity parity to 0.57 while keeping approvals near 50.0% → 54.2%.
+- Utility adjustments further cut average risk for applicants with strong payment reliability, yet LegacyRedlinedZip remains below the 0.80 threshold (disparate impact 0.29).
 
 ## Recommendations
 
-- Adopt the utility-adjusted weighting in a controlled pilot to validate sustained fairness gains without materially increasing risk.
-- Expand data collection on alternative credit indicators (utility, rental payment history) to support robust scoring beyond traditional credit bureaus.
+- Only adopt the outcome-sensitive eviction scoring with accompanying fairness guardrails, given the disparate impact observed on LegacyRedlinedZip applicants.
+- Pilot the reduced-credit and utility adjustments in tandem to offset the added eviction penalties while monitoring risk exposure.
 - Continue monitoring approval ratios quarterly and flag any proxy group that drops below a 0.80 disparate impact ratio.
 
 _Report generated by scripts/fairnessAnalysis.ts._
