@@ -72,10 +72,11 @@ npm start
 
 UI: Navigate to `/screening/calculator` to use a form that calls this API.
 
-### Income fairness audit
+### Policy and fairness resources
 
 - Run `npm run audit:affordability` to compare strict 3× rent enforcement with the tiered affordability scoring model.
 - See [docs/affordabilityPolicy.md](docs/affordabilityPolicy.md) for methodology, results, and policy guidance.
+- Review [docs/individualizedAssessmentPolicy.md](docs/individualizedAssessmentPolicy.md) for case-by-case criminal and eviction screening standards, staff training expectations, and audit logging requirements.
 
 ## Project Structure
 
