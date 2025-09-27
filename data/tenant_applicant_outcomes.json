@@ -1,0 +1,674 @@
+[
+  {
+    "id": "A1",
+    "income": 78000,
+    "debt": 21000,
+    "credit_score": 772,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.95,
+    "actual_outcome": "approved",
+    "monthly_rent": 1850,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.99,
+      "late_payments": 1,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "A2",
+    "income": 82000,
+    "debt": 24000,
+    "credit_score": 758,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 0
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.88,
+    "actual_outcome": "approved",
+    "monthly_rent": 1900,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.97,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "A3",
+    "income": 69000,
+    "debt": 26000,
+    "credit_score": 745,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.81,
+    "actual_outcome": "approved",
+    "monthly_rent": 1650,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.94,
+      "late_payments": 3,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "A4",
+    "income": 72000,
+    "debt": 25000,
+    "credit_score": 768,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.9,
+    "actual_outcome": "approved",
+    "monthly_rent": 1750,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.88,
+      "late_payments": 5,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "A5",
+    "income": 76000,
+    "debt": 28000,
+    "credit_score": 732,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 0
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.86,
+    "actual_outcome": "approved",
+    "monthly_rent": 1800,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.95,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "A6",
+    "income": 81000,
+    "debt": 22000,
+    "credit_score": 755,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.93,
+    "actual_outcome": "approved",
+    "monthly_rent": 1880,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.96,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "A7",
+    "income": 70000,
+    "debt": 30000,
+    "credit_score": 738,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.84,
+    "actual_outcome": "approved",
+    "monthly_rent": 1680,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.85,
+      "late_payments": 6,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "A8",
+    "income": 83000,
+    "debt": 21000,
+    "credit_score": 781,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "HighOpportunityZip",
+    "proxy_label": "Majority",
+    "utility_payment_score": 0.89,
+    "actual_outcome": "approved",
+    "monthly_rent": 1950,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.98,
+      "late_payments": 1,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "B1",
+    "income": 61000,
+    "debt": 27000,
+    "credit_score": 642,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 4
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.83,
+    "actual_outcome": "approved",
+    "monthly_rent": 1600,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.92,
+      "late_payments": 3,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "B2",
+    "income": 58000,
+    "debt": 25000,
+    "credit_score": 618,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 5
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.79,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1580,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.84,
+      "late_payments": 6,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B3",
+    "income": 54000,
+    "debt": 26000,
+    "credit_score": 605,
+    "rental_history": {
+      "evictions": 1,
+      "late_payments": 4
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.74,
+    "actual_outcome": "denied",
+    "monthly_rent": 1500,
+    "rental_reference": "concern",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.72,
+      "late_payments": 8,
+      "lease_violations": 2,
+      "eviction_filed": true,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B4",
+    "income": 59000,
+    "debt": 30000,
+    "credit_score": 612,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 6
+    },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "misdemeanor"
+    },
+    "employment_status": "part-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.7,
+    "actual_outcome": "denied",
+    "monthly_rent": 1520,
+    "rental_reference": "concern",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.68,
+      "late_payments": 9,
+      "lease_violations": 2,
+      "eviction_filed": true,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B5",
+    "income": 62000,
+    "debt": 31000,
+    "credit_score": 655,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.85,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1650,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.9,
+      "late_payments": 4,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B6",
+    "income": 60000,
+    "debt": 28000,
+    "credit_score": 628,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 5
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.76,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1550,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.79,
+      "late_payments": 7,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B7",
+    "income": 56000,
+    "debt": 25000,
+    "credit_score": 598,
+    "rental_history": {
+      "evictions": 1,
+      "late_payments": 7
+    },
+    "criminal_background": {
+      "has_criminal_record": true,
+      "type_of_crime": "non-violent"
+    },
+    "employment_status": "unemployed",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.65,
+    "actual_outcome": "denied",
+    "monthly_rent": 1480,
+    "rental_reference": "concern",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.6,
+      "late_payments": 10,
+      "lease_violations": 3,
+      "eviction_filed": true,
+      "renewed": false
+    }
+  },
+  {
+    "id": "B8",
+    "income": 63000,
+    "debt": 24000,
+    "credit_score": 662,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "LegacyRedlinedZip",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.82,
+    "actual_outcome": "approved",
+    "monthly_rent": 1700,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.93,
+      "late_payments": 3,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C1",
+    "income": 64000,
+    "debt": 23000,
+    "credit_score": 648,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.92,
+    "actual_outcome": "approved",
+    "monthly_rent": 1750,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.95,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C2",
+    "income": 61000,
+    "debt": 22000,
+    "credit_score": 634,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.9,
+    "actual_outcome": "approved",
+    "monthly_rent": 1700,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.93,
+      "late_payments": 3,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C3",
+    "income": 58000,
+    "debt": 21000,
+    "credit_score": 622,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.88,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1680,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.9,
+      "late_payments": 4,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C4",
+    "income": 56000,
+    "debt": 20000,
+    "credit_score": 608,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "part-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.94,
+    "actual_outcome": "approved",
+    "monthly_rent": 1650,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.91,
+      "late_payments": 3,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C5",
+    "income": 60000,
+    "debt": 24000,
+    "credit_score": 655,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 2
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.96,
+    "actual_outcome": "approved",
+    "monthly_rent": 1800,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.96,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  },
+  {
+    "id": "C6",
+    "income": 62000,
+    "debt": 26000,
+    "credit_score": 640,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 4
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.91,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1780,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.88,
+      "late_payments": 5,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "C7",
+    "income": 57000,
+    "debt": 25000,
+    "credit_score": 618,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 3
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "unemployed",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.87,
+    "actual_outcome": "flagged",
+    "monthly_rent": 1600,
+    "rental_reference": "satisfactory",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.82,
+      "late_payments": 6,
+      "lease_violations": 1,
+      "eviction_filed": false,
+      "renewed": false
+    }
+  },
+  {
+    "id": "C8",
+    "income": 65000,
+    "debt": 27000,
+    "credit_score": 646,
+    "rental_history": {
+      "evictions": 0,
+      "late_payments": 1
+    },
+    "criminal_background": {
+      "has_criminal_record": false,
+      "type_of_crime": null
+    },
+    "employment_status": "full-time",
+    "proxy_group": "ImmigrantCommunity",
+    "proxy_label": "ProtectedProxy",
+    "utility_payment_score": 0.93,
+    "actual_outcome": "approved",
+    "monthly_rent": 1850,
+    "rental_reference": "excellent",
+    "tenancy_outcome": {
+      "on_time_payment_rate": 0.95,
+      "late_payments": 2,
+      "lease_violations": 0,
+      "eviction_filed": false,
+      "renewed": true
+    }
+  }
+]

@@ -2,12 +2,16 @@ export type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 import type { ScreeningConfig } from './screeningConfig';
 import { defaultScreeningConfig } from './screeningConfig';
 
+
+export type RentalReference = 'excellent' | 'satisfactory' | 'concern';
+
 export type EvictionOutcome = 'filed' | 'dismissed' | 'settled' | 'judgment';
 
 export interface EvictionFiling {
   filed_at: string; // ISO date the filing occurred
   outcome: EvictionOutcome;
 }
+
 
 export interface RentalHistory {
   evictions: number; // number of eviction judgments on record
@@ -39,6 +43,8 @@ export interface TenantData {
   rental_history: RentalHistory;
   criminal_background: CriminalBackground;
   employment_status: EmploymentStatus;
+  rental_reference?: RentalReference;
+  utility_payment_score?: number; // alternative data derived from utility payment history (0-1)
 }
 
 export interface CriminalRecordEvaluation {
@@ -152,6 +158,13 @@ export function evaluateCreditScore(credit_score: number, config?: ScreeningConf
 }
 
 
+export function evaluateRentalHistory(
+  rental_history: RentalHistory,
+  config?: ScreeningConfig,
+  rental_reference?: RentalReference,
+): number {
+
+
 export type CreditTier = 'excellent' | 'good' | 'poor';
 
 export function determineCreditTier(
@@ -188,6 +201,7 @@ function outcomeBasePoints(outcome: EvictionOutcome, config: ScreeningConfig): n
 }
 
 export function evaluateRentalHistory(rental_history: RentalHistory, config?: ScreeningConfig): number {
+
   let risk_score = 0;
   if (config) {
     const rentalScoring = config.scoring.rental;
@@ -223,14 +237,47 @@ export function evaluateRentalHistory(rental_history: RentalHistory, config?: Sc
     if (rental_history.late_payments > rentalScoring.latePaymentsThreshold) {
       risk_score += rentalScoring.latePaymentsPoints;
     }
+    if (rental_reference) {
+      if (rental_reference === 'excellent') {
+        risk_score += config.scoring.rental.excellentReferenceOffset;
+      } else if (rental_reference === 'satisfactory') {
+        risk_score += config.scoring.rental.satisfactoryReferenceOffset;
+      } else if (rental_reference === 'concern') {
+        risk_score += config.scoring.rental.concernReferencePoints;
+      }
+    }
     return risk_score;
   }
   // default behavior
   if (rental_history.evictions > 0) risk_score += 3; // Red flag
   if (rental_history.late_payments > 3) risk_score += 2; // Instability
+  if (rental_reference) {
+    if (rental_reference === 'excellent') risk_score -= 1;
+    else if (rental_reference === 'concern') risk_score += 2;
+  }
   return risk_score;
 }
 
+
+export function evaluateAlternativeData(tenant: TenantData, config: ScreeningConfig): number {
+  const thresholds = config.thresholds.alternativeData;
+  const scoring = config.scoring.alternativeData;
+  if (!thresholds || !scoring) return 0;
+
+  const utilityScore = tenant.utility_payment_score;
+  if (utilityScore == null) return 0;
+
+  const { strong, moderate, weak } = thresholds.utility;
+  if (utilityScore >= strong) return scoring.utilityStrongOffset;
+  if (utilityScore >= moderate) return scoring.utilityModerateOffset;
+  if (utilityScore <= weak) return scoring.utilityWeakPoints;
+  return 0;
+}
+
+export function evaluateCriminalRecord(criminal_background: CriminalBackground, config?: ScreeningConfig): number {
+  if (config) return criminal_background.has_criminal_record ? config.scoring.criminal.hasRecordPoints : 0;
+  return criminal_background.has_criminal_record ? 3 : 0;
+4=======
 function normalizeRecords(input?: CriminalRecord[] | null): CriminalRecord[] {
   if (!Array.isArray(input)) return [];
   return input
@@ -337,6 +384,7 @@ export function evaluateCriminalRecord(
   }
 
   return { risk, requiresIndividualReview, consideredRecords, disregardedRecords, rationale };
+
 }
 
 export function evaluateEmploymentStatus(status: EmploymentStatus, config?: ScreeningConfig): number {
@@ -591,6 +639,13 @@ export function calculateRiskScore(
 
   const dtiHighApplied = affordability.dti > config.thresholds.dtiHigh;
   if (dtiHighApplied) total += config.scoring.dtiHigh;
+
+
+  risk_score += evaluateCreditScore(tenant.credit_score, config);
+  risk_score += evaluateRentalHistory(tenant.rental_history, config, tenant.rental_reference);
+  risk_score += evaluateCriminalRecord(tenant.criminal_background, config);
+  risk_score += evaluateEmploymentStatus(tenant.employment_status, config);
+  risk_score += evaluateAlternativeData(tenant, config);
 
   const creditPoints = evaluateCreditScore(tenant.credit_score, config);
   total += creditPoints;
