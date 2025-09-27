@@ -995,7 +995,9 @@ export default function ScreeningCalculatorPage() {
                     Tip: Document outreach attempts and keep supporting evidence with the applicant file.
                   </p>
                 </section>
-            <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
+              )}
+
+              <div className="rounded border border-green-300 bg-green-50 text-green-800 p-4">
               <p className="font-medium">Risk Score: {result.risk_score}</p>
               <p className="font-medium">Decision: {result.decision}</p>
               {result.breakdown?.criminal && (

@@ -326,13 +326,21 @@ export function applyJurisdictionPolicy(
 
   if (criminal) {
     if (!criminal.allowed || criminal.stage === 'post-offer') {
-      if (adjusted.scoring.criminal.hasRecordPoints !== 0) {
+      if (adjusted.scoring.criminal.cleanRecordPoints !== 0 || 
+          adjusted.scoring.criminal.staleRecordPoints !== 0 ||
+          adjusted.scoring.criminal.recentMisdemeanorPoints !== 0 ||
+          adjusted.scoring.criminal.recentFelonyPoints !== 0 ||
+          adjusted.scoring.criminal.recentViolentFelonyPoints !== 0) {
         adjustments.push({
           criteria: 'criminal',
           description: `${policy.name}: criminal history scoring removed because checks are ${criminal.allowed ? 'limited to post-offer reviews' : 'not allowed'} at application.`,
         });
       }
-      adjusted.scoring.criminal.hasRecordPoints = 0;
+      adjusted.scoring.criminal.cleanRecordPoints = 0;
+      adjusted.scoring.criminal.staleRecordPoints = 0;
+      adjusted.scoring.criminal.recentMisdemeanorPoints = 0;
+      adjusted.scoring.criminal.recentFelonyPoints = 0;
+      adjusted.scoring.criminal.recentViolentFelonyPoints = 0;
     }
     if (criminal.lookbackYears && criminal.allowed) {
       warnings.push(
