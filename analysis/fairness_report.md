@@ -14,15 +14,14 @@ Production QuickLease qualitative and credit scoring defaults.
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 75.0% | 12.5% | 12.5% | 1.94 | 0.38 | 1.00 |
-| ImmigrantCommunity | 8 | 12.5% | 62.5% | 25.0% | 5.81 | 1.88 | 0.17 |
-| LegacyRedlinedZip | 8 | 12.5% | 12.5% | 75.0% | 11.88 | 1.75 | 0.17 |
+| HighOpportunityZip | 8 | 87.5% | 0.0% | 12.5% | 1.94 | 0.38 | 1.00 |
+| ImmigrantCommunity | 8 | 75.0% | 0.0% | 25.0% | 5.81 | 1.88 | 0.86 |
+| LegacyRedlinedZip | 8 | 12.5% | 0.0% | 87.5% | 11.88 | 1.75 | 0.14 |
 
-Overall approval rate: 33.3%
+Overall approval rate: 58.3%
 
 **Adverse impact alerts (approval rate < 80% of reference group):**
-- ImmigrantCommunity: approval rate 12.5% (disparate impact ratio 0.17).
-- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.17).
+- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.14).
 
 ## Reduced Credit Weighting (50% penalty)
 
@@ -30,15 +29,14 @@ Halves the credit penalties to lessen their contribution to the total risk score
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 75.0% | 25.0% | 0.0% | 1.75 | 0.19 | 1.00 |
-| ImmigrantCommunity | 8 | 25.0% | 50.0% | 25.0% | 4.88 | 0.94 | 0.33 |
-| LegacyRedlinedZip | 8 | 12.5% | 12.5% | 75.0% | 11.00 | 0.88 | 0.17 |
+| HighOpportunityZip | 8 | 87.5% | 0.0% | 12.5% | 1.75 | 0.19 | 1.00 |
+| ImmigrantCommunity | 8 | 75.0% | 0.0% | 25.0% | 4.88 | 0.94 | 0.86 |
+| LegacyRedlinedZip | 8 | 25.0% | 0.0% | 75.0% | 11.00 | 0.88 | 0.29 |
 
-Overall approval rate: 37.5%
+Overall approval rate: 62.5%
 
 **Adverse impact alerts (approval rate < 80% of reference group):**
-- ImmigrantCommunity: approval rate 25.0% (disparate impact ratio 0.33).
-- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.17).
+- LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.29).
 
 ## Qualitative Pilot (landlord + payments)
 
@@ -46,15 +44,14 @@ Softens penalties for verified landlord praise and emphasizes consistent payment
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 75.0% | 25.0% | 0.0% | 1.69 | 0.38 | 1.00 |
-| ImmigrantCommunity | 8 | 12.5% | 62.5% | 25.0% | 5.28 | 1.88 | 0.17 |
-| LegacyRedlinedZip | 8 | 12.5% | 12.5% | 75.0% | 11.00 | 1.75 | 0.17 |
+| HighOpportunityZip | 8 | 87.5% | 0.0% | 12.5% | 1.69 | 0.38 | 1.00 |
+| ImmigrantCommunity | 8 | 75.0% | 0.0% | 25.0% | 5.28 | 1.88 | 0.86 |
+| LegacyRedlinedZip | 8 | 25.0% | 0.0% | 75.0% | 11.00 | 1.75 | 0.29 |
 
-Overall approval rate: 33.3%
+Overall approval rate: 62.5%
 
 **Adverse impact alerts (approval rate < 80% of reference group):**
-- ImmigrantCommunity: approval rate 12.5% (disparate impact ratio 0.17).
-- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.17).
+- LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.29).
 
 ## Credit + Utility Payment Adjustment
 
@@ -62,23 +59,23 @@ Moderate credit penalties while granting offsets for strong payment histories an
 
 | Proxy Group | Applicants | Approval Rate | Flagged Rate | Denial Rate | Avg Risk Score | Avg Credit Penalty | Disparate Impact |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| HighOpportunityZip | 8 | 87.5% | 12.5% | 0.0% | 0.94 | 0.19 | 1.00 |
-| ImmigrantCommunity | 8 | 50.0% | 25.0% | 25.0% | 3.72 | 1.16 | 0.57 |
-| LegacyRedlinedZip | 8 | 12.5% | 12.5% | 75.0% | 10.38 | 1.06 | 0.14 |
+| HighOpportunityZip | 8 | 100.0% | 0.0% | 0.0% | 0.94 | 0.19 | 1.00 |
+| ImmigrantCommunity | 8 | 75.0% | 0.0% | 25.0% | 3.72 | 1.16 | 0.75 |
+| LegacyRedlinedZip | 8 | 25.0% | 0.0% | 75.0% | 10.38 | 1.06 | 0.25 |
 
-Overall approval rate: 50.0%
+Overall approval rate: 66.7%
 
 **Adverse impact alerts (approval rate < 80% of reference group):**
-- ImmigrantCommunity: approval rate 50.0% (disparate impact ratio 0.57).
-- LegacyRedlinedZip: approval rate 12.5% (disparate impact ratio 0.14).
+- ImmigrantCommunity: approval rate 75.0% (disparate impact ratio 0.75).
+- LegacyRedlinedZip: approval rate 25.0% (disparate impact ratio 0.25).
 
 ## Comparative Insights
 
-- Baseline weights show the strongest disparate impact, with approval ratios for LegacyRedlinedZip and ImmigrantCommunity groups falling below the 0.80 threshold (0.17 and 0.17 respectively).
-- Reduced Credit Weighting (50% penalty) lifts overall approval to 37.5% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.33.
-- Qualitative Pilot (landlord + payments) lifts overall approval to 33.3% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.17.
-- Credit + Utility Payment Adjustment lifts overall approval to 50.0% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.57.
-- The strongest relief for LegacyRedlinedZip applicants comes from Reduced Credit Weighting (50% penalty), which raises the disparate impact ratio to 0.17 while keeping average risk below 11.00.
+- Baseline weights show the strongest disparate impact, with approval ratios for LegacyRedlinedZip and ImmigrantCommunity groups falling below the 0.80 threshold (0.14 and 0.86 respectively).
+- Reduced Credit Weighting (50% penalty) lifts overall approval to 62.5% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.86.
+- Qualitative Pilot (landlord + payments) lifts overall approval to 62.5% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.86.
+- Credit + Utility Payment Adjustment lifts overall approval to 66.7% and improves disparate impact ratios for ImmigrantCommunity applicants to 0.75.
+- The strongest relief for LegacyRedlinedZip applicants comes from Reduced Credit Weighting (50% penalty), which raises the disparate impact ratio to 0.29 while keeping average risk below 11.00.
 
 ## Recommendations
 
