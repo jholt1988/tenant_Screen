@@ -1,1 +1,8 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/screening/route": "app/api/screening/route.js",
+  "/applications/page": "app/applications/page.js",
+  "/page": "app/page.js",
+  "/screening/page": "app/screening/page.js",
+  "/screening/calculator/page": "app/screening/calculator/page.js"
+}
