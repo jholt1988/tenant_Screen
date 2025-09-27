@@ -201,7 +201,7 @@ function outcomeBasePoints(outcome: EvictionOutcome, config: ScreeningConfig): n
 
 }
 
-export function evaluateRentalHistory(rental_history: RentalHistory, config?: ScreeningConfig): number {
+export function evaluateRentalHistory(rental_history: RentalHistory, config?: ScreeningConfig, rental_reference?: RentalReference): number {
 
   let risk_score = 0;
   if (config) {
