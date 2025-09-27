@@ -1,5 +1,5 @@
 
-import type { TenantData, Decision, ComplianceSummary } from './screening';
+import type { TenantData, Decision, ComplianceSummary, RiskBreakdown } from './screening';
 import type { AdverseActionNotice } from './adverseActionNotice';
 
 export interface AuditEntry {
@@ -18,7 +18,7 @@ export interface AuditEntry {
     risk_score: number; 
     decision: Decision; 
     compliance?: ComplianceSummary;
-    breakdown?: any[];
+    breakdown?: RiskBreakdown;
     adverse_actions?: any[];
   };
 

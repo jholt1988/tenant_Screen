@@ -62,7 +62,7 @@ export default function ScreeningCalculatorPage() {
     decision: Decision; 
     compliance?: ComplianceSummary;
     notice?: AdverseActionNotice | null;
-    breakdown?: RiskBreakdown[];
+    breakdown?: RiskBreakdown;
     adverse_actions?: any[];
   };
 

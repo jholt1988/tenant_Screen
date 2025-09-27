@@ -74,7 +74,7 @@ function validateTenantPayload(payload: any): { ok: true; data: TenantData } | {
 
   const recordsRaw = Array.isArray(criminal_background?.records) ? criminal_background.records : [];
   const records: CriminalRecord[] = [];
-  recordsRaw.forEach((rec: any, idx) => {
+  recordsRaw.forEach((rec: any, idx: number) => {
     const severity = rec?.severity;
     const category = rec?.category;
     const years_since = toNumber(rec?.years_since);
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         risk_score,
         decision,
         compliance: result.compliance,
-        breakdown: [],
+        breakdown: undefined,
         adverse_actions: [],
       },
     });
@@ -276,9 +276,9 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
         );
       }
       const u = cfg.thresholds.alternativeData.utility;
-      if (isFiniteNumber(u.strong)) out.thresholds.alternativeData.utility.strong = u.strong!;
-      if (isFiniteNumber(u.moderate)) out.thresholds.alternativeData.utility.moderate = u.moderate!;
-      if (isFiniteNumber(u.weak)) out.thresholds.alternativeData.utility.weak = u.weak!;
+      if (isFiniteNumber(u.strong)) out.thresholds.alternativeData!.utility.strong = u.strong!;
+      if (isFiniteNumber(u.moderate)) out.thresholds.alternativeData!.utility.moderate = u.moderate!;
+      if (isFiniteNumber(u.weak)) out.thresholds.alternativeData!.utility.weak = u.weak!;
     }
 
     if (cfg.thresholds.rental && isFiniteNumber(cfg.thresholds.rental.evictionLookbackYears)) {
@@ -373,9 +373,9 @@ function validateAndMergeConfig(override: any): { value: ScreeningConfig; errors
         );
       }
       const alt = cfg.scoring.alternativeData;
-      if (isFiniteNumber(alt.utilityStrongOffset)) out.scoring.alternativeData.utilityStrongOffset = alt.utilityStrongOffset!;
-      if (isFiniteNumber(alt.utilityModerateOffset)) out.scoring.alternativeData.utilityModerateOffset = alt.utilityModerateOffset!;
-      if (isFiniteNumber(alt.utilityWeakPoints)) out.scoring.alternativeData.utilityWeakPoints = alt.utilityWeakPoints!;
+      if (isFiniteNumber(alt.utilityStrongOffset)) out.scoring.alternativeData!.utilityStrongOffset = alt.utilityStrongOffset!;
+      if (isFiniteNumber(alt.utilityModerateOffset)) out.scoring.alternativeData!.utilityModerateOffset = alt.utilityModerateOffset!;
+      if (isFiniteNumber(alt.utilityWeakPoints)) out.scoring.alternativeData!.utilityWeakPoints = alt.utilityWeakPoints!;
     }
   }
 

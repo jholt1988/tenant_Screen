@@ -282,7 +282,7 @@ function normalizeRecords(input?: CriminalRecord[] | null): CriminalRecord[] {
       severity: rec.severity,
       category: rec.category ?? 'other',
       years_since: rec.years_since,
-      description: rec.description ?? null,
+      ...(rec.description !== undefined && { description: rec.description }),
     }))
     .filter(
       (rec): rec is CriminalRecord =>
@@ -547,10 +547,11 @@ export function calculateRiskProfile(
   }
 
   if (tenant.criminal_background.has_criminal_record) {
+    const criminalEval = evaluateCriminalRecord(tenant.criminal_background, config);
     contributions.push({
       factor: 'criminal',
       label: 'Criminal record identified',
-      points: evaluateCriminalRecord(tenant.criminal_background, config),
+      points: criminalEval.risk,
       severity: 'warning',
       dataSource: 'Public records & criminal databases',
       recommendedAction: 'Submit rehabilitation documents or expungement records for consideration.',
