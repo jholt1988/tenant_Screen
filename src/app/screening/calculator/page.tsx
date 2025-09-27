@@ -446,9 +446,22 @@ export default function ScreeningCalculatorPage() {
         if (isNum(c.goodMin)) out.thresholds.credit.goodMin = c.goodMin;
       }
 
+      if (override.thresholds.alternativeData && override.thresholds.alternativeData.utility) {
+        if (!out.thresholds.alternativeData) {
+          out.thresholds.alternativeData = JSON.parse(
+            JSON.stringify(defaultScreeningConfig.thresholds.alternativeData ?? { utility: { strong: 0.9, moderate: 0.8, weak: 0.65 } }),
+          );
+        }
+        const u = override.thresholds.alternativeData.utility;
+        if (isNum(u.strong)) out.thresholds.alternativeData.utility.strong = u.strong;
+        if (isNum(u.moderate)) out.thresholds.alternativeData.utility.moderate = u.moderate;
+        if (isNum(u.weak)) out.thresholds.alternativeData.utility.weak = u.weak;
+      }
+
       if (override.thresholds.rental) {
         const r = override.thresholds.rental;
         if (isNum(r.evictionLookbackYears)) out.thresholds.rental.evictionLookbackYears = r.evictionLookbackYears;
+      }
 
       if (override.thresholds.criminal) {
         const cr = override.thresholds.criminal;
@@ -507,6 +520,23 @@ export default function ScreeningCalculatorPage() {
         if (isNum(e.fullTime)) out.scoring.employment.fullTime = e.fullTime;
         if (isNum(e.partTime)) out.scoring.employment.partTime = e.partTime;
         if (isNum(e.unemployed)) out.scoring.employment.unemployed = e.unemployed;
+      }
+      if (override.scoring.alternativeData) {
+        if (!out.scoring.alternativeData) {
+          out.scoring.alternativeData = JSON.parse(
+            JSON.stringify(
+              defaultScreeningConfig.scoring.alternativeData ?? {
+                utilityStrongOffset: 0,
+                utilityModerateOffset: 0,
+                utilityWeakPoints: 0,
+              },
+            ),
+          );
+        }
+        const alt = override.scoring.alternativeData;
+        if (isNum(alt.utilityStrongOffset)) out.scoring.alternativeData.utilityStrongOffset = alt.utilityStrongOffset;
+        if (isNum(alt.utilityModerateOffset)) out.scoring.alternativeData.utilityModerateOffset = alt.utilityModerateOffset;
+        if (isNum(alt.utilityWeakPoints)) out.scoring.alternativeData.utilityWeakPoints = alt.utilityWeakPoints;
       }
     }
     if (override.decision) {
@@ -1111,5 +1141,4 @@ export default function ScreeningCalculatorPage() {
       </div>
     </div>
   );
-}
 }
