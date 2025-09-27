@@ -60,14 +60,35 @@ npm start
   "credit_score": 720,
   "rental_history": { "evictions": 0, "late_payments": 2 },
   "criminal_background": { "has_criminal_record": false, "type_of_crime": null },
-  "employment_status": "full-time"
+  "employment_status": "full-time",
+  "jurisdiction": "us-wa-seattle"
 }
 ```
 
 - Response:
 
 ```
-{ "risk_score": 5, "decision": "Flagged for Review" }
+{
+  "risk_score": 5,
+  "decision": "Flagged for Review",
+  "compliance": {
+    "policyId": "us-wa-seattle",
+    "policyName": "Seattle, WA",
+    "adjustments": [
+      {
+        "criteria": "income",
+        "description": "Seattle, WA: income-to-rent threshold reduced to 2.5× rent per local rules."
+      },
+      {
+        "criteria": "criminal",
+        "description": "Seattle, WA: criminal history scoring removed because checks are not allowed at application."
+      }
+    ],
+    "warnings": [
+      "Seattle, WA: criminal reviews must ignore all arrests, all convictions except sex offender registry exceptions."
+    ]
+  }
+}
 ```
 
 UI: Navigate to `/screening/calculator` to use a form that calls this API.
@@ -76,7 +97,10 @@ UI: Navigate to `/screening/calculator` to use a form that calls this API.
 
 - Run `npm run audit:affordability` to compare strict 3× rent enforcement with the tiered affordability scoring model.
 - See [docs/affordabilityPolicy.md](docs/affordabilityPolicy.md) for methodology, results, and policy guidance.
+- See [docs/jurisdictionCompliance.md](docs/jurisdictionCompliance.md) for jurisdiction-specific screening regulations and configuration tips.
+
 - Review [docs/individualizedAssessmentPolicy.md](docs/individualizedAssessmentPolicy.md) for case-by-case criminal and eviction screening standards, staff training expectations, and audit logging requirements.
+
 
 ## Project Structure
 

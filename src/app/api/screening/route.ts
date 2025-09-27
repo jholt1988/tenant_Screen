@@ -12,6 +12,7 @@ import {
 } from '@/lib/screening';
 import { logAudit, getAudits } from '@/lib/audit';
 import { defaultScreeningConfig, type ScreeningConfig } from '@/lib/screeningConfig';
+import { getJurisdictionPolicy } from '@/lib/jurisdictions';
 import { randomUUID } from 'crypto';
 import { generateAdverseActionNotice } from '@/lib/adverseActionNotice';
 
@@ -136,6 +137,16 @@ export async function POST(request: NextRequest) {
       return Response.json({ errors: config.errors }, { status: 400 });
     }
 
+
+    const jurisdiction = typeof payload?.jurisdiction === 'string' ? payload.jurisdiction : undefined;
+    const policy = jurisdiction ? getJurisdictionPolicy(jurisdiction) : undefined;
+    if (jurisdiction && !policy) {
+      return Response.json({ errors: [`Unknown jurisdiction policy: ${jurisdiction}`] }, { status: 400 });
+    }
+
+    const result = tenantScreeningAlgorithm(validation.data, config.value, { policy });
+    const { risk_score, decision } = result;
+
    const { risk_score, decision } = tenantScreeningAlgorithm(validation.data, config.value);
     const notice = generateAdverseActionNotice(decision, validation.data);
 
@@ -153,6 +164,12 @@ export async function POST(request: NextRequest) {
       input: validation.data,
       risk_score,
       decision,
+
+      compliance: result.compliance,
+    });
+
+    return Response.json({ risk_score, decision, compliance: result.compliance });
+
       notice,
     });
 

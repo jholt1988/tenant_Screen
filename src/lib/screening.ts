@@ -1,6 +1,13 @@
 export type EmploymentStatus = 'full-time' | 'part-time' | 'unemployed';
 import type { ScreeningConfig } from './screeningConfig';
 import { defaultScreeningConfig } from './screeningConfig';
+import {
+  applyJurisdictionPolicy,
+  getJurisdictionPolicy,
+  type ComplianceAdjustment,
+  type JurisdictionId,
+  type JurisdictionPolicy,
+} from './jurisdictions';
 
 
 export type RentalReference = 'excellent' | 'satisfactory' | 'concern';
@@ -681,17 +688,57 @@ export function makeDecision(risk_score: number, config: ScreeningConfig = defau
   return 'Denied';
 }
 
+
+export interface ScreeningOptions {
+  policy?: JurisdictionPolicy | JurisdictionId | null;
+}
+
+export interface ComplianceSummary {
+  policyId: JurisdictionId;
+  policyName: string;
+  adjustments: ComplianceAdjustment[];
+  warnings: string[];
+}
+
+function resolvePolicy(policy?: JurisdictionPolicy | JurisdictionId | null): JurisdictionPolicy | undefined {
+  if (!policy) return undefined;
+  if (typeof policy === 'string') return getJurisdictionPolicy(policy);
+  return policy;
+
 export interface TenantScreeningResult {
   risk_score: number;
   decision: Decision;
   breakdown: RiskFactorContribution[];
   adverse_actions: AdverseActionExplanation[];
   affordability: AffordabilityEvaluation;
+
 }
 
 export function tenantScreeningAlgorithm(
   tenant: TenantData,
   config: ScreeningConfig = defaultScreeningConfig,
+
+  options?: ScreeningOptions,
+): { risk_score: number; decision: Decision; compliance?: ComplianceSummary } {
+  const resolvedPolicy = resolvePolicy(options?.policy ?? null);
+  let compliance: ComplianceSummary | undefined;
+  let configToUse = config;
+
+  if (resolvedPolicy) {
+    const applied = applyJurisdictionPolicy(config, resolvedPolicy);
+    configToUse = applied.config;
+    compliance = {
+      policyId: resolvedPolicy.id,
+      policyName: resolvedPolicy.name,
+      adjustments: applied.adjustments,
+      warnings: applied.warnings,
+    };
+  }
+
+  const risk_score = calculateRiskScore(tenant, configToUse);
+  const decision = makeDecision(risk_score, configToUse);
+  return compliance ? { risk_score, decision, compliance } : { risk_score, decision };
+
 
 ): TenantScreeningResult {
   const profile = calculateRiskProfile(tenant, config);
@@ -705,4 +752,5 @@ export function tenantScreeningAlgorithm(
   };
 
 ): 
+
 }
